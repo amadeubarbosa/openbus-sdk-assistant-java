@@ -21,6 +21,7 @@ jacorb-omgapi-3.5-SNAPSHOT.jar
 openbus-sdk-core-2.0-SNAPSHOT.jar
 openbus-sdk-demo-util-2.0-SNAPSHOT.jar
 openbus-sdk-legacy-2.0-SNAPSHOT.jar
+openbus-sdk-assistant-core-2.0.0-SNAPSHOT.jar
 scs-core-1.2.1.3.jar
 slf4j-api-1.7.6.jar
 slf4j-jdk14-1.7.6.jar
