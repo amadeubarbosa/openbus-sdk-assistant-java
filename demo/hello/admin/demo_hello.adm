@@ -1,0 +1,26 @@
+Category {
+  id = "openbus_demos",
+  name = "Categoria para demos do OpenBus",
+}
+
+Entity {
+  id = "demo_hello_java",
+  category = "openbus_demos",
+  name = "Demo Hello do SDK Java",
+}
+
+Certificate {
+  id = "demo_hello_java",
+  certificate = "DemoHello.crt",
+}
+
+Interface {
+  id = "IDL:demo/Hello:1.0",
+}
+
+Grant {
+  id = "demo_hello_java",
+  interfaces = {
+	"IDL:demo/Hello:1.0",
+  }
+}

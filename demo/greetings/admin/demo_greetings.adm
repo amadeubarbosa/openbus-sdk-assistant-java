@@ -1,0 +1,26 @@
+Category {
+  id = "openbus_demos",
+  name = "Categoria para demos do OpenBus",
+}
+
+Entity {
+  id = "demo_greetings_java",
+  category = "openbus_demos",
+  name = "Demo Greetings do SDK Java",
+}
+
+Certificate {
+  id = "demo_greetings_java",
+  certificate = "DemoGreetings.crt",
+}
+
+Interface {
+  id = "IDL:demo/Greetings:1.0",
+}
+
+Grant {
+  id = "demo_greetings_java",
+  interfaces = {
+	"IDL:demo/Greetings:1.0",
+  }
+}

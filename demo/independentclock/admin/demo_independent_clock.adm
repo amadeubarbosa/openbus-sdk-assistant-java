@@ -1,0 +1,26 @@
+Category {
+  id = "openbus_demos",
+  name = "Categoria para demos do OpenBus",
+}
+
+Entity {
+  id = "demo_independentclock_java",
+  category = "openbus_demos",
+  name = "Demo Independent Clock do SDK Java",
+}
+
+Certificate {
+  id = "demo_independentclock_java",
+  certificate = "DemoIndependentClock.crt",
+}
+
+Interface {
+  id = "IDL:demo/Clock:1.0",
+}
+
+Grant {
+  id = "demo_independentclock_java",
+  interfaces = {
+	"IDL:demo/Clock:1.0",
+  }
+}

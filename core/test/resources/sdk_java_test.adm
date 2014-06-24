@@ -1,0 +1,31 @@
+Category {
+  id = "sdk_java_2_test",
+  name = "Testes do SDK Java",
+}
+
+Entity {
+  id = "TestEntity",
+  category = "sdk_java_2_test",
+  name = "Servidor da aplicação de teste do SDK Java",
+}
+
+Certificate {
+  id = "TestEntity",
+  certificate = "TestEntity.crt",
+}
+
+Interface {
+  id = "IDL:tecgraf/openbus/demo/hello/Hello:1.0"
+}
+
+Interface {
+  id = "IDL:test/CallerChainInspector:1.0"
+}
+
+Grant {
+  id = "TestEntity",
+  interfaces = {
+    "IDL:tecgraf/openbus/demo/hello/Hello:1.0",
+    "IDL:test/CallerChainInspector:1.0",
+  }
+}

@@ -1,0 +1,28 @@
+Category {
+  id = "openbus_demos",
+  name = "Categoria para demos do OpenBus",
+}
+
+Entity {
+  id = "demo_callchain_java",
+  category = "openbus_demos",
+  name = "Demo Call Chain do SDK Java",
+}
+
+Certificate {
+  id = "demo_callchain_java",
+  certificate = "DemoCallChain.crt",
+}
+
+
+Interface {
+  id = "IDL:demo/Messenger:1.0",
+}
+
+Grant {
+  id = "demo_callchain_java",
+  interfaces = {
+	"IDL:demo/Messenger:1.0",
+  }
+}
+
