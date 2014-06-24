@@ -52,8 +52,8 @@
   </scm>
 
   <modules>
-    <module>demo</module>
     <module>core</module>
+    <module>demo</module>
   </modules>
 
   <build>

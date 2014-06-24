@@ -31,7 +31,8 @@
   <dependencies>
     <dependency>
       <groupId>tecgraf.openbus</groupId>
-      <artifactId>openbus-sdk-core</artifactId>
+      <artifactId>openbus-sdk-assistant-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>

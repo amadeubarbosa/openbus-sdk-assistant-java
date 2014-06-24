@@ -11,7 +11,7 @@
   <artifactId>openbus-sdk-assistant-demo-hello</artifactId>
   <packaging>jar</packaging>
 
-  <name>OpenBus - SDK - Assistente - Demonstrações - Hello</name>
+  <name>OpenBus - SDK - Assistente - DemonstraÃ§Ãµes - Hello</name>
   <url>http://www.tecgraf.puc-rio.br/openbus</url>
 
   <build>
@@ -31,7 +31,8 @@
   <dependencies>
     <dependency>
       <groupId>tecgraf.openbus</groupId>
-      <artifactId>openbus-sdk-core</artifactId>
+      <artifactId>openbus-sdk-assistant-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
