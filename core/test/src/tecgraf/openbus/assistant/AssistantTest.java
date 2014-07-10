@@ -2,6 +2,7 @@ package tecgraf.openbus.assistant;
 
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
@@ -21,8 +22,10 @@ import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.core.ORBInitializer;
 import tecgraf.openbus.core.OpenBusPrivateKey;
 import tecgraf.openbus.core.v2_0.OctetSeqHolder;
+import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
 import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
 import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
+import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.util.Utils;
@@ -36,6 +39,8 @@ public class AssistantTest {
   private static String server;
   private static String privateKeyFile;
   private static OpenBusPrivateKey privateKey;
+  private static String wrongKeyFile;
+  private static OpenBusPrivateKey wrongKey;
 
   @BeforeClass
   public static void oneTimeSetUp() throws Exception {
@@ -47,6 +52,8 @@ public class AssistantTest {
     server = properties.getProperty("server.entity.name");
     privateKeyFile = properties.getProperty("server.private.key");
     privateKey = OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+    wrongKeyFile = properties.getProperty("wrongkey");
+    wrongKey = OpenBusPrivateKey.createPrivateKeyFromFile(wrongKeyFile);
     Utils.setLogLevel(Level.FINE);
   }
 
@@ -296,6 +303,60 @@ public class AssistantTest {
   }
 
   @Test
+  public void invalidRegisterAndShutdownOnCallbackTest()
+    throws AdapterInactive, InvalidName, SCSException, InterruptedException {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    boolean newRegisterFailed = false;
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        failed.set(true);
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+    Assistant assist =
+      Assistant.createWithPrivateKey(host, port, server, privateKey, params);
+    ORB orb = assist.orb();
+    ComponentContext context = Utils.buildComponent(orb);
+    context.removeFacet("IMetaInterface");
+    ServiceProperty[] props =
+      new ServiceProperty[] { new ServiceProperty("offer.domain",
+        "Assistant Test") };
+    assist.registerService(context.getIComponent(), props);
+    Thread.sleep((int) (params.interval * 3 * 1000));
+    Assert.assertTrue(failed.get());
+
+    ComponentContext context2 = Utils.buildComponent(orb);
+    try {
+      assist.registerService(context2.getIComponent(), props);
+    }
+    catch (RejectedExecutionException e) {
+      //as expected due to assistant shutdown
+      newRegisterFailed = true;
+    }
+    Assert.assertTrue(newRegisterFailed);
+  }
+
+  @Test
   public void loginBySharedAuthTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     AssistantParams params = new AssistantParams();
@@ -438,4 +499,306 @@ public class AssistantTest {
     assist.shutdown();
   }
 
+  @Test
+  public void invalidPasswordTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof AccessDenied) {
+          asExpected.set(true);
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+  }
+
+  @Test
+  public void invalidPrivateKeyTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof AccessDenied) {
+          asExpected.set(true);
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant.createWithPrivateKey(host, port, server, wrongKey, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+  }
+
+  @Test
+  public void invalidLoginMissingCertificateTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof MissingCertificate) {
+          asExpected.set(true);
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant.createWithPrivateKey(host, port, entity, privateKey, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+  }
+
+  @Test
+  public void findWithInvalidLoginByPasswordTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean findCalled = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // nem chega a ser chamado por conta de não existir um login válido
+        findCalled.set(true);
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant assistant =
+      Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+
+    ServiceProperty[] search =
+      new ServiceProperty[] { new ServiceProperty("offer.domain",
+        "Assistant Test") };
+    ServiceOfferDesc[] services = assistant.findServices(search, 3);
+    Assert.assertFalse(findCalled.get());
+    Assert.assertEquals(0, services.length);
+    assistant.shutdown();
+  }
+
+  @Test
+  public void shutdownOnLoginCallbackThenFindTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    final AtomicBoolean findCalled = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof AccessDenied) {
+          asExpected.set(true);
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // nem chega a ser chamado por conta de não existir um login válido
+        findCalled.set(true);
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant assistant =
+      Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+
+    ServiceProperty[] search =
+      new ServiceProperty[] { new ServiceProperty("offer.domain",
+        "Assistant Test") };
+    ServiceOfferDesc[] services = assistant.findServices(search, -1);
+    Assert.assertEquals(0, services.length);
+  }
+
+  @Test
+  public void shutdownOnLoginCallbackThenRegisterTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    boolean registerFailed = false;
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof AccessDenied) {
+          asExpected.set(true);
+        }
+        else {
+          System.err.println("Erro inesperado!");
+          except.printStackTrace();
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    Assistant assistant =
+      Assistant.createWithPrivateKey(host, port, server, wrongKey, params);
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+
+    ComponentContext context = Utils.buildComponent(assistant.orb());
+    ServiceProperty[] props =
+      new ServiceProperty[] { new ServiceProperty("offer.domain",
+        "Assistant Test") };
+    try {
+      assistant.registerService(context.getIComponent(), props);
+    }
+    catch (RejectedExecutionException e) {
+      //as expected due to assistant shutdown
+      registerFailed = true;
+    }
+    Assert.assertTrue(registerFailed);
+  }
 }
