@@ -163,9 +163,8 @@ public abstract class Assistant {
       throw new IllegalArgumentException("ORB já está em uso.");
     }
     if (params.interval != null) {
-      if (params.interval.isNaN() ||
-        params.interval.isInfinite() ||
-        params.interval < 1.0f) {
+      if (params.interval.isNaN() || params.interval.isInfinite()
+        || params.interval < 1.0f) {
         throw new IllegalArgumentException(
           "O intervalo de espera do assistente deve ser maior ou igual a 1s.");
       }
@@ -468,7 +467,7 @@ public abstract class Assistant {
    *         <code>false</code> caso contrário.
    */
   private boolean shouldRetry(int retries, int attempt) {
-    if (retries < 0 || attempt >= 0) {
+    if ((retries < 0 || attempt >= 0) && !this.shutdown) {
       try {
         Thread.sleep(mInterval);
       }
