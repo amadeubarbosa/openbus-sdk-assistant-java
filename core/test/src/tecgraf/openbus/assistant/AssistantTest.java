@@ -39,6 +39,7 @@ public class AssistantTest {
   private static String server;
   private static String privateKeyFile;
   private static OpenBusPrivateKey privateKey;
+  private static String entityWithoutCert;
   private static String wrongKeyFile;
   private static OpenBusPrivateKey wrongKey;
 
@@ -52,6 +53,7 @@ public class AssistantTest {
     server = properties.getProperty("server.entity.name");
     privateKeyFile = properties.getProperty("server.private.key");
     privateKey = OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+    entityWithoutCert = properties.getProperty("entity.withoutcert");
     wrongKeyFile = properties.getProperty("wrongkey");
     wrongKey = OpenBusPrivateKey.createPrivateKeyFromFile(wrongKeyFile);
     Utils.setLogLevel(Level.FINE);
@@ -623,7 +625,8 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPrivateKey(host, port, entity, privateKey, params);
+    Assistant.createWithPrivateKey(host, port, entityWithoutCert, privateKey,
+      params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
