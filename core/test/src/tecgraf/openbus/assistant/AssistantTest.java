@@ -535,7 +535,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+    Assistant.createWithPassword(host, port, "invalid-1", new byte[] {}, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -669,7 +669,7 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+      Assistant.createWithPassword(host, port, "invalid-2", new byte[] {}, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -724,7 +724,7 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, entity, new byte[] {}, params);
+      Assistant.createWithPassword(host, port, "invalid-3", new byte[] {}, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
