@@ -87,6 +87,99 @@ public class AssistantTest {
   }
 
   @Test
+  public void nullArgsToCreateWithPasswordTest() {
+    boolean failed = false;
+    try {
+        Assistant.createWithPassword(host, port, null, password);
+    }
+    catch (IllegalArgumentException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+    failed = false;
+    try {
+        Assistant.createWithPassword(host, port, entity, null);
+    }
+    catch (IllegalArgumentException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+  }
+
+  @Test
+  public void nullArgsToCreateWithPrivateKeyTest() {
+    boolean failed = false;
+    try {
+        Assistant.createWithPrivateKey(host, port, null, privateKey);
+    }
+    catch (IllegalArgumentException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+    failed = false;
+    try {
+        Assistant.createWithPrivateKey(host, port, entity, null);
+    }
+    catch (IllegalArgumentException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+  }
+
+  @Test
+  public void nullArgsToCreateBySharedAuthTest() throws Throwable {
+    final AtomicBoolean failed = new AtomicBoolean(false);
+    final AtomicBoolean asExpected = new AtomicBoolean(false);
+    AssistantParams params = new AssistantParams();
+    params.interval = 1.0f;
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Throwable except) {
+        failed.set(true);
+        if (except instanceof IllegalArgumentException) {
+          asExpected.set(true);
+        }
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+        // do nothing
+      }
+    };
+
+    new Assistant(host, port, params) {
+      
+      @Override
+      public AuthArgs onLoginAuthentication() {
+        LoginProcess attempt = null;
+        byte[] secret = null;
+        return new AuthArgs(attempt, secret);
+      }
+    };
+    try {
+      Thread.sleep((int) (params.interval * 3 * 1000));
+    }
+    catch (InterruptedException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(failed.get());
+    Assert.assertTrue(asExpected.get());
+  }
+  
+  @Test
   public void createTest() {
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
@@ -226,7 +319,7 @@ public class AssistantTest {
             new ServiceProperty("loop.index", Integer.toString(index)) };
       assist.registerService(context.getIComponent(), props);
     }
-    Thread.sleep((int) (params.interval * 3 * 1000));
+    Thread.sleep((int) (params.interval * 5 * 1000));
     ServiceProperty[] search =
       new ServiceProperty[] { new ServiceProperty("offer.domain",
         "Assistant Test") };
@@ -255,7 +348,7 @@ public class AssistantTest {
             new ServiceProperty("loop.index", Integer.toString(index)) };
       assist.registerService(context.getIComponent(), props);
     }
-    Thread.sleep((int) (params.interval * 3 * 1000));
+    Thread.sleep((int) (params.interval * 5 * 1000));
     ServiceOfferDesc[] found = assist.getAllServices(3);
     Assert.assertTrue(found.length >= index);
     assist.shutdown();
@@ -535,7 +628,8 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPassword(host, port, "invalid-1", new byte[] {}, params);
+    Assistant
+      .createWithPassword(host, port, "invalid-1", new byte[] {}, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -669,7 +763,8 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, "invalid-2", new byte[] {}, params);
+      Assistant.createWithPassword(host, port, "invalid-2", new byte[] {},
+        params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -724,7 +819,8 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, "invalid-3", new byte[] {}, params);
+      Assistant.createWithPassword(host, port, "invalid-3", new byte[] {},
+        params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }

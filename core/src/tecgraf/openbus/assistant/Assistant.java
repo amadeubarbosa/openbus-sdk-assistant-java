@@ -222,11 +222,12 @@ public abstract class Assistant {
    */
   public static Assistant createWithPassword(String host, int port,
     final String entity, final byte[] password, AssistantParams params) {
+    final AuthArgs authArgs = new AuthArgs(entity, password);
     return new Assistant(host, port, params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
-        return new AuthArgs(entity, password);
+        return authArgs;
       }
     };
   }
@@ -273,11 +274,12 @@ public abstract class Assistant {
    */
   public static Assistant createWithPrivateKey(String host, int port,
     final String entity, final PrivateKey key, AssistantParams params) {
+    final AuthArgs authArgs = new AuthArgs(entity, key);
     return new Assistant(host, port, params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
-        return new AuthArgs(entity, key);
+        return authArgs;
       }
     };
   }
@@ -563,10 +565,10 @@ public abstract class Assistant {
    *         <code>false</code> caso seja bem sucedido.
    */
   private boolean login() {
-    AuthArgs args = onLoginAuthentication();
     boolean failed = true;
     Throwable ex = null;
     try {
+      AuthArgs args = onLoginAuthentication();
       if (args != null) {
         switch (args.mode) {
           case AuthByPassword:
