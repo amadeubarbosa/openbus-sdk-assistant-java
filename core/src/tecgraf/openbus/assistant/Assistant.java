@@ -327,8 +327,9 @@ public abstract class Assistant {
    * as propriedades automaticamente geradas pelo barramento.
    * <p>
    * Caso ocorram erros, a callback de tratamento de erro apropriada será
-   * chamada. Se o número de tentativas se esgotar e não houver sucesso, uma
-   * sequência vazia será retornada.
+   * chamada. Se o número de tentativas se esgotar e não houver sucesso, a 
+   * última exceção recebida será lançada. Caso não haja login durante todas as
+   * tentativas, uma sequência vazia será retornada.
    * 
    * @param properties Propriedades que as ofertas de serviços encontradas devem
    *        apresentar.
@@ -415,14 +416,17 @@ public abstract class Assistant {
    * <p>
    * A autenticação compartilhada permite criar um novo login compartilhando a
    * mesma autenticação do login atual da conexão. Portanto essa operação só
-   * pode ser chamada enquanto a conexão estiver autenticada, caso contrário a
-   * exceção de sistema CORBA::NO_PERMISSION{NoLogin} é lançada. As informações
+   * pode ser chamada enquanto a conexão estiver autenticada. As informações
    * fornecidas por essa operação devem ser passadas para a operação
    * 'loginBySharedAuth' para conclusão do processo de login por autenticação
    * compartilhada. Isso deve ser feito dentro do tempo de lease definido pelo
    * administrador do barramento. Caso contrário essas informações se tornam
    * inválidas e não podem mais ser utilizadas para criar um login.
    * 
+   * Ao término do número máximo de tentativas estipulado sem sucesso, a última
+   * exceção será lançada. Caso uma exceção não tenha sido recebida, será
+   * retornado NULL.
+   *
    * @param secret Segredo a ser fornecido na conclusão do processo de login.
    * @param retries Parâmetro opcional indicando o número de novas tentativas de
    *        busca de ofertas em caso de falhas, como o barramento estar
