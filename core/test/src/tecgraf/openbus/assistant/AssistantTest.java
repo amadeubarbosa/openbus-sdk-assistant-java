@@ -1,5 +1,6 @@
 package tecgraf.openbus.assistant;
 
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
@@ -20,7 +21,6 @@ import scs.core.exception.SCSException;
 import tecgraf.openbus.Connection;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.core.ORBInitializer;
-import tecgraf.openbus.core.OpenBusPrivateKey;
 import tecgraf.openbus.core.v2_0.OctetSeqHolder;
 import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
 import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
@@ -28,6 +28,7 @@ import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
 import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.security.Cryptography;
 import tecgraf.openbus.util.Utils;
 
 public class AssistantTest {
@@ -38,13 +39,14 @@ public class AssistantTest {
   private static byte[] password;
   private static String server;
   private static String privateKeyFile;
-  private static OpenBusPrivateKey privateKey;
+  private static RSAPrivateKey privateKey;
   private static String entityWithoutCert;
   private static String wrongKeyFile;
-  private static OpenBusPrivateKey wrongKey;
+  private static RSAPrivateKey wrongKey;
 
   @BeforeClass
   public static void oneTimeSetUp() throws Exception {
+    Cryptography crypto = Cryptography.getInstance();
     Properties properties = Utils.readPropertyFile("/test.properties");
     host = properties.getProperty("openbus.host.name");
     port = Integer.valueOf(properties.getProperty("openbus.host.port"));
@@ -52,10 +54,10 @@ public class AssistantTest {
     password = properties.getProperty("entity.password").getBytes();
     server = properties.getProperty("server.entity.name");
     privateKeyFile = properties.getProperty("server.private.key");
-    privateKey = OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+    privateKey = crypto.readKeyFromFile(privateKeyFile);
     entityWithoutCert = properties.getProperty("entity.withoutcert");
     wrongKeyFile = properties.getProperty("wrongkey");
-    wrongKey = OpenBusPrivateKey.createPrivateKeyFromFile(wrongKeyFile);
+    wrongKey = crypto.readKeyFromFile(wrongKeyFile);
     Utils.setLogLevel(Level.FINE);
   }
 
@@ -90,7 +92,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPasswordTest() {
     boolean failed = false;
     try {
-        Assistant.createWithPassword(host, port, null, password);
+      Assistant.createWithPassword(host, port, null, password);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -98,7 +100,7 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-        Assistant.createWithPassword(host, port, entity, null);
+      Assistant.createWithPassword(host, port, entity, null);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -110,7 +112,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPrivateKeyTest() {
     boolean failed = false;
     try {
-        Assistant.createWithPrivateKey(host, port, null, privateKey);
+      Assistant.createWithPrivateKey(host, port, null, privateKey);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -118,7 +120,7 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-        Assistant.createWithPrivateKey(host, port, entity, null);
+      Assistant.createWithPrivateKey(host, port, entity, null);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -136,12 +138,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof IllegalArgumentException) {
           asExpected.set(true);
@@ -150,18 +152,18 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
 
     new Assistant(host, port, params) {
-      
+
       @Override
       public AuthArgs onLoginAuthentication() {
         LoginProcess attempt = null;
@@ -178,7 +180,7 @@ public class AssistantTest {
     Assert.assertTrue(failed.get());
     Assert.assertTrue(asExpected.get());
   }
-  
+
   @Test
   public void createTest() {
     ORB orb = ORBInitializer.initORB();
@@ -364,22 +366,22 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -408,23 +410,23 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         failed.set(true);
         assistant.shutdown();
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -460,22 +462,22 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -516,22 +518,22 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
     };
@@ -563,22 +565,22 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -604,12 +606,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof AccessDenied) {
           asExpected.set(true);
@@ -618,12 +620,12 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -650,12 +652,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof AccessDenied) {
           asExpected.set(true);
@@ -664,12 +666,12 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -695,12 +697,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof MissingCertificate) {
           asExpected.set(true);
@@ -709,12 +711,12 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -741,23 +743,23 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // nem chega a ser chamado por conta de não existir um login válido
         findCalled.set(true);
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -793,12 +795,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof AccessDenied) {
           asExpected.set(true);
@@ -807,13 +809,13 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // nem chega a ser chamado por conta de não existir um login válido
         findCalled.set(true);
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };
@@ -848,12 +850,12 @@ public class AssistantTest {
 
       @Override
       public void onRegisterFailure(Assistant assistant, IComponent component,
-        ServiceProperty[] properties, Throwable except) {
+        ServiceProperty[] properties, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onLoginFailure(Assistant assistant, Throwable except) {
+      public void onLoginFailure(Assistant assistant, Exception except) {
         failed.set(true);
         if (except instanceof AccessDenied) {
           asExpected.set(true);
@@ -866,12 +868,12 @@ public class AssistantTest {
       }
 
       @Override
-      public void onFindFailure(Assistant assistant, Throwable except) {
+      public void onFindFailure(Assistant assistant, Exception except) {
         // do nothing
       }
 
       @Override
-      public void onStartSharedAuthFailure(Assistant assistant, Throwable except) {
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
         // do nothing
       }
     };

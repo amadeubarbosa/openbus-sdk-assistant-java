@@ -20,7 +20,7 @@ public interface OnFailureCallback {
    * @param assistant assistant Assitente que chama a callback.
    * @param except Objeto que descreve a falha ocorrida.
    */
-  void onLoginFailure(Assistant assistant, Throwable except);
+  void onLoginFailure(Assistant assistant, Exception except);
 
   /**
    * Callback de notificação de falhas durante processo de login.
@@ -32,7 +32,7 @@ public interface OnFailureCallback {
    * @param except Objeto que descreve a falha ocorrida.
    */
   void onRegisterFailure(Assistant assistant, IComponent component,
-    ServiceProperty[] properties, Throwable except);
+    ServiceProperty[] properties, Exception except);
 
   /**
    * Callback de notificação de falhas durante processo de login.
@@ -40,7 +40,7 @@ public interface OnFailureCallback {
    * @param assistant assistant Assitente que chama a callback.
    * @param except Objeto que descreve a falha ocorrida.
    */
-  void onFindFailure(Assistant assistant, Throwable except);
+  void onFindFailure(Assistant assistant, Exception except);
 
   /**
    * Callback de notificação de falhas durante a inicialização de autenticação
@@ -49,6 +49,6 @@ public interface OnFailureCallback {
    * @param assistant Assistente que chama a callback.
    * @param except Objeto que descreve a falha ocorrida.
    */
-  void onStartSharedAuthFailure(Assistant assistant, Throwable except);
+  void onStartSharedAuthFailure(Assistant assistant, Exception except);
 
 }

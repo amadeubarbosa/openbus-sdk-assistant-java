@@ -24,8 +24,8 @@ demo.
 
 ant-1.8.2.jar
 ant-launcher-1.8.2.jar
-jacorb-3.5-SNAPSHOT.jar
-jacorb-omgapi-3.5-SNAPSHOT.jar
+jacorb-3.5.jar
+jacorb-omgapi-3.5.jar
 openbus-sdk-core-2.0-SNAPSHOT.jar
 openbus-sdk-demo-util-2.0-SNAPSHOT.jar
 openbus-sdk-legacy-2.0-SNAPSHOT.jar

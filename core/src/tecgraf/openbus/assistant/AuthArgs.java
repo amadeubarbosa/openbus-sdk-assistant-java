@@ -1,6 +1,7 @@
 package tecgraf.openbus.assistant;
 
-import tecgraf.openbus.PrivateKey;
+import java.security.interfaces.RSAPrivateKey;
+
 import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
 
 /**
@@ -31,7 +32,7 @@ public class AuthArgs {
   /** Senha */
   byte[] password;
   /** Chave privada */
-  PrivateKey privkey;
+  RSAPrivateKey privkey;
   /** Processo de compartilhamento de login */
   LoginProcess attempt;
   /** Segredo do compartilhamento de login */
@@ -60,7 +61,7 @@ public class AuthArgs {
    * @param privkey Chave privada correspondente ao certificado registrado a ser
    *        utilizada na autenticação.
    */
-  public AuthArgs(String entity, PrivateKey privkey) {
+  public AuthArgs(String entity, RSAPrivateKey privkey) {
     if (entity == null || privkey == null) {
       throw new IllegalArgumentException(
         "Entidade e chave privada devem ser diferentes de nulo.");

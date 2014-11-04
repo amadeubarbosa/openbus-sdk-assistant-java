@@ -1,5 +1,7 @@
 package demo;
 
+import java.security.interfaces.RSAPrivateKey;
+
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.ORBPackage.InvalidName;
 import org.omg.PortableServer.POA;
@@ -10,13 +12,12 @@ import scs.core.ComponentContext;
 import scs.core.ComponentId;
 import scs.core.exception.SCSException;
 import tecgraf.openbus.OpenBusContext;
-import tecgraf.openbus.PrivateKey;
 import tecgraf.openbus.assistant.Assistant;
-import tecgraf.openbus.core.OpenBusPrivateKey;
 import tecgraf.openbus.core.v2_0.services.ServiceFailure;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
+import tecgraf.openbus.security.Cryptography;
 
 /**
  * Parte servidora do demo Hello
@@ -59,9 +60,9 @@ public final class HelloServer {
     String entity = args[2];
     // - chave privada
     String privateKeyFile = args[3];
-    PrivateKey privateKey;
+    RSAPrivateKey privateKey;
     try {
-      privateKey = OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+      privateKey = Cryptography.getInstance().readKeyFromFile(privateKeyFile);
     }
     catch (Exception e) {
       System.out.println(Utils.keypath);

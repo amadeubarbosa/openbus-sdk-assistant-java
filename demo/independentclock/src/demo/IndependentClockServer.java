@@ -1,5 +1,6 @@
 package demo;
 
+import java.security.interfaces.RSAPrivateKey;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,11 +16,11 @@ import scs.core.ComponentId;
 import scs.core.exception.SCSException;
 import tecgraf.openbus.assistant.Assistant;
 import tecgraf.openbus.assistant.AssistantParams;
-import tecgraf.openbus.core.OpenBusPrivateKey;
 import tecgraf.openbus.core.v2_0.services.ServiceFailure;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
+import tecgraf.openbus.security.Cryptography;
 
 /**
  * Parte servidora do demo Hello
@@ -31,7 +32,7 @@ public final class IndependentClockServer {
   private static String host;
   private static int port;
   private static String entity;
-  private static OpenBusPrivateKey privateKey;
+  private static RSAPrivateKey privateKey;
   private static float interval = 1.0f;
 
   /**
@@ -72,7 +73,7 @@ public final class IndependentClockServer {
     // - chave privada
     String privateKeyFile = args[3];
     try {
-      privateKey = OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+      privateKey = Cryptography.getInstance().readKeyFromFile(privateKeyFile);
     }
     catch (Exception e) {
       System.out.println(Utils.keypath);
