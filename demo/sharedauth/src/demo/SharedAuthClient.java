@@ -1,27 +1,41 @@
 package demo;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.omg.CORBA.COMM_FAILURE;
 import org.omg.CORBA.NO_PERMISSION;
 import org.omg.CORBA.TRANSIENT;
+import org.omg.CORBA.ORBPackage.InvalidName;
 
+import scs.core.IComponent;
+import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.assistant.Assistant;
+import tecgraf.openbus.assistant.AssistantParams;
 import tecgraf.openbus.assistant.AuthArgs;
+import tecgraf.openbus.assistant.OnFailureCallback;
 import tecgraf.openbus.core.v2_0.services.ServiceFailure;
 import tecgraf.openbus.core.v2_0.services.access_control.InvalidRemoteCode;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcessHelper;
 import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
 import tecgraf.openbus.core.v2_0.services.access_control.UnknownBusCode;
 import tecgraf.openbus.core.v2_0.services.access_control.UnverifiedLoginCode;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
+import tecgraf.openbus.exception.InvalidEncodedStream;
 
+/**
+ * Demo de compartilhamento de autenticação
+ *
+ * @author Tecgraf/PUC-Rio
+ */
 public class SharedAuthClient {
+  /**
+   * Função main
+   * 
+   * @param args
+   */
   public static void main(String[] args) {
     String help =
       "Usage: 'demo' <host> <port> [file] \n"
@@ -47,16 +61,42 @@ public class SharedAuthClient {
       return;
     }
     // - arquivo
-    final String file;
+    final String path;
     if (args.length > 2) {
-      file = args[2];
+      path = args[2];
     }
     else {
-      file = "sharedauth.dat";
+      path = "sharedauth.dat";
     }
 
+    AssistantParams params = new AssistantParams();
+    params.callback = new OnFailureCallback() {
+
+      @Override
+      public void onRegisterFailure(Assistant assistant, IComponent component,
+        ServiceProperty[] properties, Exception except) {
+        // do nothing
+      }
+
+      @Override
+      public void onLoginFailure(Assistant assistant, Exception except) {
+        System.err.println("Erro ao tentar realizar login");
+        except.printStackTrace();
+        assistant.shutdown();
+      }
+
+      @Override
+      public void onFindFailure(Assistant assistant, Exception except) {
+        // do nothing
+      }
+
+      @Override
+      public void onStartSharedAuthFailure(Assistant assistant, Exception except) {
+        // do nothing
+      }
+    };
     // criando o assistente.
-    Assistant assist = new Assistant(host, port) {
+    Assistant assist = new Assistant(host, port, params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -70,25 +110,44 @@ public class SharedAuthClient {
          * escopo dessa demo.
          */
         try {
-          FileReader freader = new FileReader(file);
-          BufferedReader breader = new BufferedReader(freader);
+          // recuperando o gerente de contexto de chamadas à barramentos 
+          final OpenBusContext context =
+            (OpenBusContext) this.orb().resolve_initial_references(
+              "OpenBusContext");
+          byte[] data;
+          File file = new File(path);
+          FileInputStream is = new FileInputStream(file);
           try {
-            LoginProcess process =
-              LoginProcessHelper.narrow(orb().string_to_object(
-                breader.readLine()));
-            byte[] secret = breader.readLine().getBytes();
-            breader.close();
-            // repassa os argumentos de login
-            return new AuthArgs(process, secret);
+            int length = (int) file.length();
+            data = new byte[length];
+            int offset = is.read(data);
+            while (offset < length) {
+              int read = is.read(data, offset, length - offset);
+              if (read < 0) {
+                System.err.println("Não foi possível ler todo o arquivo");
+                System.exit(1);
+              }
+              offset += read;
+            }
+            return new AuthArgs(context.decodeSharedAuthSecret(data));
           }
           finally {
-            breader.close();
+            is.close();
           }
         }
         catch (IOException e) {
-          System.err.println("Erro ao ler recuperar dados de arquivo.");
+          System.err.println("Erro ao recuperar dados de arquivo.");
           e.printStackTrace();
         }
+        catch (InvalidName e) {
+          System.err.println("Erro ao recuperar contexto.");
+          e.printStackTrace();
+        }
+        catch (InvalidEncodedStream e) {
+          System.err.println("Dado não corresponde a um segredo válido");
+          e.printStackTrace();
+        }
+        this.shutdown();
         return null;
       }
     };
@@ -178,5 +237,4 @@ public class SharedAuthClient {
     // Finaliza o assistente
     assist.shutdown();
   }
-
 }

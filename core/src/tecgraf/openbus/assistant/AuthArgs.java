@@ -2,7 +2,7 @@ package tecgraf.openbus.assistant;
 
 import java.security.interfaces.RSAPrivateKey;
 
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
+import tecgraf.openbus.SharedAuthSecret;
 
 /**
  * Informações de autenticação de entidades.
@@ -33,10 +33,8 @@ public class AuthArgs {
   byte[] password;
   /** Chave privada */
   RSAPrivateKey privkey;
-  /** Processo de compartilhamento de login */
-  LoginProcess attempt;
   /** Segredo do compartilhamento de login */
-  byte[] secret;
+  SharedAuthSecret secret;
 
   /**
    * Construtor para realizar autenticação por senha
@@ -74,15 +72,12 @@ public class AuthArgs {
   /**
    * Construtor para realizar autenticação compartilhada
    * 
-   * @param attempt Objeto que represeta o processo de login iniciado.
-   * @param secret Segredo a ser fornecido na conclusão do processo de login.
+   * @param secret Segredo para compartilhamento de autenticação.
    */
-  public AuthArgs(LoginProcess attempt, byte[] secret) {
-    if (attempt == null || secret == null) {
-      throw new IllegalArgumentException(
-        "Processo de login e segredo devem ser diferentes de nulo.");
+  public AuthArgs(SharedAuthSecret secret) {
+    if (secret == null) {
+      throw new IllegalArgumentException("Segredo deve ser diferente de nulo.");
     }
-    this.attempt = attempt;
     this.secret = secret;
     this.mode = AuthMode.AuthBySharing;
   }

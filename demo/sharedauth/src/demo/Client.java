@@ -1,17 +1,18 @@
 package demo;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import org.omg.CORBA.COMM_FAILURE;
 import org.omg.CORBA.NO_PERMISSION;
 import org.omg.CORBA.TRANSIENT;
+import org.omg.CORBA.ORBPackage.InvalidName;
 
+import tecgraf.openbus.OpenBusContext;
+import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.assistant.Assistant;
-import tecgraf.openbus.core.v2_0.OctetSeqHolder;
 import tecgraf.openbus.core.v2_0.services.ServiceFailure;
 import tecgraf.openbus.core.v2_0.services.access_control.InvalidRemoteCode;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
 import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
 import tecgraf.openbus.core.v2_0.services.access_control.UnknownBusCode;
 import tecgraf.openbus.core.v2_0.services.access_control.UnverifiedLoginCode;
@@ -30,9 +31,10 @@ public final class Client {
    * Função main.
    * 
    * @param args argumentos.
-   * @throws FileNotFoundException
+   * @throws InvalidName
+   * @throws IOException
    */
-  public static void main(String[] args) throws FileNotFoundException {
+  public static void main(String[] args) throws InvalidName, IOException {
     // verificando parametros de entrada
     if (args.length < 3) {
       String params = "[file]";
@@ -72,10 +74,9 @@ public final class Client {
       Assistant.createWithPassword(host, port, entity, password.getBytes());
 
     // iniciando compartilhamento de autenticação
-    OctetSeqHolder secret = new OctetSeqHolder();
-    LoginProcess process;
+    SharedAuthSecret secret;
     try {
-      process = assist.startSharedAuth(secret, -1);
+      secret = assist.startSharedAuth(-1);
     }
     // bus core
     catch (ServiceFailure e) {
@@ -113,6 +114,10 @@ public final class Client {
       return;
     }
 
+    // recuperando o gerente de contexto de chamadas à barramentos 
+    final OpenBusContext context =
+      (OpenBusContext) assist.orb()
+        .resolve_initial_references("OpenBusContext");
     // persistindo dados de compartilhamento de autenticação em arquivo
     /*
      * OBS: talvez seja mais interessante para a aplicação trocar esses dados de
@@ -122,10 +127,17 @@ public final class Client {
      * funcionarão, portanto uma outra forma mais dinâmica seria mais eficaz. No
      * entanto, isso foge ao escopo dessa demo.
      */
-    PrintWriter out = new PrintWriter(file);
-    out.println(assist.orb().object_to_string(process));
-    out.println(new String(secret.value));
-    out.close();
+    byte[] data = context.encodeSharedAuthSecret(secret);
+    FileOutputStream out = null;
+    try {
+      out = new FileOutputStream(file);
+      out.write(data);
+    }
+    finally {
+      if (out != null) {
+        out.close();
+      }
+    }
 
     // busca por serviço
     ServiceProperty[] properties = new ServiceProperty[1];
@@ -214,5 +226,4 @@ public final class Client {
     // Finaliza o assistente
     assist.shutdown();
   }
-
 }

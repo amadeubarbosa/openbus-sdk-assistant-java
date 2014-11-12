@@ -7,8 +7,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
@@ -20,11 +19,10 @@ import scs.core.IComponent;
 import scs.core.exception.SCSException;
 import tecgraf.openbus.Connection;
 import tecgraf.openbus.OpenBusContext;
+import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.core.ORBInitializer;
-import tecgraf.openbus.core.v2_0.OctetSeqHolder;
 import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
 import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
 import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
@@ -166,9 +164,8 @@ public class AssistantTest {
 
       @Override
       public AuthArgs onLoginAuthentication() {
-        LoginProcess attempt = null;
-        byte[] secret = null;
-        return new AuthArgs(attempt, secret);
+        SharedAuthSecret secret = null;
+        return new AuthArgs(secret);
       }
     };
     try {
@@ -492,10 +489,9 @@ public class AssistantTest {
           Connection conn = context.createConnection(host, port);
           context.setCurrentConnection(conn);
           conn.loginByPassword(entity, password);
-          OctetSeqHolder secret = new OctetSeqHolder();
-          LoginProcess loginProcess = conn.startSharedAuth(secret);
+          SharedAuthSecret secret = conn.startSharedAuth();
           conn.logout();
-          return new AuthArgs(loginProcess, secret.value);
+          return new AuthArgs(secret);
         }
         catch (Exception e) {
           this.shutdown();
@@ -539,17 +535,16 @@ public class AssistantTest {
     };
     Assistant assist =
       Assistant.createWithPassword(host, port, entity, password, params);
-    OctetSeqHolder secret = new OctetSeqHolder();
-    LoginProcess attempt = assist.startSharedAuth(secret, 1);
+    SharedAuthSecret secret = assist.startSharedAuth(1);
     Assert.assertFalse(failed.get());
-    Assert.assertNotNull(attempt);
+    Assert.assertNotNull(secret);
 
     // connect using basic API
     OpenBusContext context =
       (OpenBusContext) assist.orb()
         .resolve_initial_references("OpenBusContext");
     Connection conn = context.createConnection(host, port);
-    conn.loginBySharedAuth(attempt, secret.value);
+    conn.loginBySharedAuth(secret);
     LoginInfo loginInfo = conn.login();
     Assert.assertEquals(entity, loginInfo.entity);
     conn.logout();

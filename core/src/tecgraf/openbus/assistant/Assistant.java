@@ -24,13 +24,12 @@ import scs.core.IComponent;
 import tecgraf.openbus.Connection;
 import tecgraf.openbus.InvalidLoginCallback;
 import tecgraf.openbus.OpenBusContext;
+import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.core.ORBInitializer;
-import tecgraf.openbus.core.v2_0.OctetSeqHolder;
 import tecgraf.openbus.core.v2_0.services.ServiceFailure;
 import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
 import tecgraf.openbus.core.v2_0.services.access_control.InvalidLoginCode;
 import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginProcess;
 import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
 import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
 import tecgraf.openbus.core.v2_0.services.offer_registry.InvalidProperties;
@@ -327,7 +326,7 @@ public abstract class Assistant {
    * as propriedades automaticamente geradas pelo barramento.
    * <p>
    * Caso ocorram erros, a callback de tratamento de erro apropriada será
-   * chamada. Se o número de tentativas se esgotar e não houver sucesso, a 
+   * chamada. Se o número de tentativas se esgotar e não houver sucesso, a
    * última exceção recebida será lançada. Caso não haja login durante todas as
    * tentativas, uma sequência vazia será retornada.
    * 
@@ -343,12 +342,12 @@ public abstract class Assistant {
    *        interface 'AssistantFactory').
    * 
    * @return Sequência de descrições de ofertas de serviço encontradas.
-   * @throws Throwable
+   * @throws Exception
    */
   public ServiceOfferDesc[] findServices(ServiceProperty[] properties,
-    int retries) throws Throwable {
+    int retries) throws Exception {
     int attempt = retries;
-    Throwable last;
+    Exception last;
     do {
       last = null;
       if (conn.login() != null) {
@@ -358,7 +357,7 @@ public abstract class Assistant {
             return offerDescs;
           }
         }
-        catch (Throwable e) {
+        catch (Exception e) {
           last = e;
         }
       }
@@ -386,11 +385,11 @@ public abstract class Assistant {
    *        interface 'AssistantFactory').
    * 
    * @return Sequência de descrições de ofertas de serviço registradas.
-   * @throws Throwable
+   * @throws Exception
    */
-  public ServiceOfferDesc[] getAllServices(int retries) throws Throwable {
+  public ServiceOfferDesc[] getAllServices(int retries) throws Exception {
     int attempt = retries;
-    Throwable last;
+    Exception last;
     do {
       last = null;
       if (conn.login() != null) {
@@ -400,7 +399,7 @@ public abstract class Assistant {
             return offerDescs;
           }
         }
-        catch (Throwable e) {
+        catch (Exception e) {
           last = e;
         }
       }
@@ -438,22 +437,21 @@ public abstract class Assistant {
    *        interface 'AssistantFactory').
    * 
    * @return Objeto que representa o processo de login iniciado.
-   * @throws Throwable
+   * @throws Exception
    */
-  public LoginProcess startSharedAuth(OctetSeqHolder secret, int retries)
-    throws Throwable {
+  public SharedAuthSecret startSharedAuth(int retries) throws Exception {
     int attempt = retries;
-    Throwable last;
+    Exception last;
     do {
       last = null;
       if (conn.login() != null) {
         try {
-          LoginProcess process = startSharedAuthentication(secret);
-          if (process != null) {
-            return process;
+          SharedAuthSecret secret = startSharedAuthentication();
+          if (secret != null) {
+            return secret;
           }
         }
-        catch (Throwable e) {
+        catch (Exception e) {
           last = e;
         }
       }
@@ -580,7 +578,7 @@ public abstract class Assistant {
           case AuthByCertificate:
             conn.loginByCertificate(args.entity, args.privkey);
           case AuthBySharing:
-            conn.loginBySharedAuth(args.attempt, args.secret);
+            conn.loginBySharedAuth(args.secret);
         }
         failed = false;
       }
@@ -779,13 +777,12 @@ public abstract class Assistant {
    *         <code>null</code> caso algum erro tenha ocorrido.
    * @throws Exception
    */
-  private LoginProcess startSharedAuthentication(OctetSeqHolder secret)
-    throws Exception {
+  private SharedAuthSecret startSharedAuthentication() throws Exception {
     boolean failed = true;
     Exception ex = null;
-    LoginProcess attempt = null;
+    SharedAuthSecret secret = null;
     try {
-      attempt = this.conn.startSharedAuth(secret);
+      secret = this.conn.startSharedAuth();
       failed = false;
     }
     // bus core
@@ -829,7 +826,7 @@ public abstract class Assistant {
         throw ex;
       }
     }
-    return attempt;
+    return secret;
   }
 
   /**
