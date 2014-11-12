@@ -1,0 +1,585 @@
+%
+%  SDK OpenBus 2.0 - C#
+%
+%  Created by Carlos Eduardo Lara Augusto on 2012-10-22.
+%  Copyright (c) 2012 Tecgraf/PUC-Rio. All rights reserved.
+%
+\documentclass[]{article}
+
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[latin1]{inputenc}
+
+\usepackage[brazil]{babel}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+
+% Multipart figures
+%\usepackage{subfigure}
+
+% More symbols
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{latexsym}
+
+\usepackage{hyperref}
+
+% Surround parts of graphics with box
+\usepackage{boxedminipage}
+
+% Package for including code in the document
+\usepackage{mwlabinputs2}
+
+% If you want to generate a toc for each chapter (use with book)
+\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%% Redefines the label 'Listing' for ..
+\def\lstlistingname{Código}
+\codestyle{colorful}
+
+% new commands
+\newcommand{\foreign}[1]{\textit{#1}}
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newcommand{\openbus}{\textsc{OpenBus}}
+\newcommand{\corba}{\textsc{CORBA}}
+\newcommand{\orb}{\textsc{ORB}}
+\newcommand{\jacorb}{\textsc{JacORB}}
+\newcommand{\scs}{\textsc{SCS}}
+\newcommand{\assistant}{\textsc{Assistant}}
+\newcommand{\version}{2.0.1}
+
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+\title{Tutorial do SDK Java \version{} do \openbus{}}
+\author{Tecgraf}
+
+\date{\today}
+
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+\tableofcontents
+
+\section{Introdução}
+
+Este documento é destinado aos usuários desenvolvedores de aplicações Java que desejem utilizar o \openbus{}~\cite{web:OPENBUS}. 
+O processo de \emph{deployment} do barramento não é coberto neste tutorial.
+Considera-se como pré-requisito para um bom entendimento deste documento o conhecimento básico dos seguintes assuntos:
+
+\begin{itemize}
+  \item Linguagem de programação Java.
+  \item \corba{}~\cite{omg08corbaspec}.
+  \item Modelo de Componentes \scs{}~\cite{web:SCS}.
+  \item Conceitos básicos do \openbus{}~\cite{ob2.0core}.
+\end{itemize}
+
+A proposta do manual é capacitar o desenvolvedor, que atenda aos pré-requisitos do documento, a utilizar e desenvolver serviços para o barramento \openbus{} dentro do escopo dessa API.
+
+
+\section {Escopo}
+
+Assistente, ou \assistant{}, é o nome que damos a uma abstração da biblioteca de acesso do \openbus{}, também conhecida como API básica, cujo objetivo é atuar como um utilitário que atende os cenários de uso mais comuns.
+Para atingir esse objetivo, o \assistant{} torna-se menos flexível que o uso direto da API básica, mas atende a maioria dos casos de uso envolvendo o barramento \openbus{}.
+
+
+\subsection{Aplicações do \assistant{}}
+
+As aplicações mais comuns, e as que são melhor implementadas usando o \assistant{}, têm o seguinte em comum:
+
+\begin{itemize}
+  \item Comunica-se com um único barramento.
+  \item Possui apenas uma autenticação no barramento.
+\end{itemize}
+
+Geralmente um aplicativo que se conecta ao barramento é um de dois tipos, ou um híbrido:
+
+\begin{itemize}
+  \item Servidor.
+  \item Cliente.
+  \item Híbrido do dois.
+\end{itemize}
+
+Um servidor adiciona ofertas ao barramento, disponibilizando um ou mais serviços através destas ofertas. Um cliente, por outro lado, consulta o barramento por ofertas de serviços que deseja consumir.
+
+
+\subsection{O que o \assistant{} não faz}
+
+Por ser uma abstração mais simples e focada em um grupo de casos de uso, naturalmente o \assistant{} não consegue resolver todos os problemas que a API básica (em cima da qual ele é implementado), consegue.
+
+Portanto, os seguintes casos só conseguem ser implementados com o uso da API básica:
+
+\begin{itemize}
+  \item A aplicação se comunica com mais de um barramento.
+  \item São necessárias múltiplas autenticações com um ou mais barramentos.
+\end{itemize}
+
+O \assistant{} recebe as informações de autenticação (como usuário, senha, chave privada, etc) em sua construção, assim como outras informações necessárias para o uso de \corba{}.
+Com essas informações ele se autentica ao barramento de forma assíncrona e mantém válida essa autenticação, renovando-a quando estiver para expirar.
+Também é refaz a autenticação se a mesma ficar inválida por qualquer motivo, como por exemplo erros de rede temporários.
+
+A construção do \assistant{} não implica que a autenticação já tenha ocorrido com sucesso.
+Isso significa que métodos síncronos como \emph{findServices} podem falhar com a exceção \emph{NO\_PERMISSION} com código de erro \emph{NoLogin} pelo fato de a aplicação não estar ainda autenticada no barramento. 
+No entanto, alguns mecanismos são oferecidos para facilitar o tratamento desses erros, como veremos na próxima seção.
+
+
+\subsection{Vantagens de se utilizar o \assistant{}}
+
+Para as aplicações que estão no escopo do \assistant{}, o mesmo possui várias vantagens, dentre as principais:
+
+\begin{itemize}
+  \item Autenticação simplificada com o barramento.
+  \item Tratamento automático de erros.
+  \item Ofertas de serviços são mantidas, sendo refeitas automaticamente caso a autenticação mude.
+\end{itemize}
+
+Como foi dito anteriormente, a autenticação ocorre de forma assíncrona.
+O mesmo ocorre com o registro de ofertas.
+Essa diferença entre o \assistant{} e a API básica é crucial para entender as
+vantagens de se usar o mesmo.
+
+O registro de ofertas ocorre de forma assíncrona e, se por qualquer motivo o registro for invalidado pelo barramento o \assistant{} automaticamente faz um novo registro da oferta.
+Assim, o usuário não precisa se preocupar com os vários casos de erro que possam acontecer num sistema distribuido para garantir que suas ofertas estarão sempre visíveis a outros serviços.
+
+Métodos síncronos  da API do \assistant{}, como por exemplo a busca de ofertas, em geral contam com um parâmetro que indica quantas tentativas devem ser feitas, já para evitar que erros como \emph{NO\_PERMISSION} com código de erro \emph{NoLogin} e outros precisem ser capturados.
+É possivel ainda definir um parâmetro opcional do \assistant{} que informa o tempo de espera entre as tentativas.
+Essas e outras funcionalidades serão explicadas com mais detalhes neste documento em seções posteriores.
+
+Utilizando o \assistant{} precisamos nos preocupar apenas com o conceito da autenticação ao barramento, já que apenas um barramento é utilizado.
+Caso a API básica fosse utilizada, teríamos de nos preocupar ainda com o conceito de conexão ao barramento (para mais detalhes, consultar a documentação da API básica).
+
+
+\section{Preparação do Ambiente}
+
+O \openbus{} utiliza o mecanismo de interceptação de \corba{} no processo de controle de acesso aos serviços.
+Após a chamada de requisição de \emph{login} no barramento, todas as chamadas seguintes devem estar com a credencial de acesso anexada.
+Sendo assim, faz-se necessário a habilitação dos interceptadores frente ao \orb{} que será utilizado.
+No SDK Java a comunicação será feita utilizando o \jacorb{}~\cite{web:Jacorb}, e o SDK se encarregará de registrar os interceptadores em sua inicialização, não sendo necessária nenhuma ação por parte do usuário nesse aspecto.
+
+\subsection{Teste}
+
+Antes de começar a programação, é aconselhável que o usuário coloque em funcionamento a demo Hello que acompanha o pacote do \assistant{}.
+O correto funcionamento da demo elimina uma série de possíveis problemas que o desenvolvedor possa enfrentar durante o seu projeto, como por exemplo: problemas de comunicação com o barramento e ausência de bibliotecas  externas.
+
+A demo Hello Java do \assistant{} possui um \emph{jar} com a classe servidor e cliente, e pode ser executada de acordo com as instruções do arquivo README.txt que a acompanha.
+Importante lembrar que, de acordo com a documentação do \jacorb{}, é necessário utilizar o mecanismo de sobrescrita de padrão do Java (\emph{Java Endorsed Standards Override Mechanism}). Isso é feito utilizando a opção \emph{-Djava.endorsed.dirs} da JVM e passando o diretório onde se encontra os \emph{jars} do \jacorb{}. Assim garantimos que a implementação do \jacorb{} e as classes disponibilizadas da OMG são encontradas em preferência a qualquer outra classe já incluída na JVM.
+
+Após a execução do cliente, no terminal do processo servidor a seguinte mensagem deve ser exibida: ``Hello <nome-da-entidade-cliente>!''
+
+
+\section{Desenvolvimento}
+
+\subsection{API}\label{api}
+
+Prover ou buscar serviços em um barramento \openbus{} usando o \assistant{} são tarefas bem simples.
+Para isso, precisamos construir uma instância da classe \assistant{} que nos proverá as funções necessárias para ofertar ou buscar serviços no barramento.
+Em Java instancia-se a classe \emph{tecgraf.openbus.assistant.Assistant}.
+
+%Além dessa classe, a API do \assistant{} é composta pela classe utilitária e estática ``tecgraf.openbus.assistant.Utils''.
+
+No caso de aplicações do tipo servidor, que recebam chamadas, pode ser necessário o uso de mais uma classe: \emph{tecgraf.openbus.OpenBusContext}. 
+Em Java essa classe é única para cada instância de \orb{}.
+Através dela, será possível obter a identidade do cliente ou cadeia de clientes de uma chamada.
+Para obter a instância do \orb{} como da classe \emph{OpenBusContext}, devemos utilizar a classe estática \emph{tecgraf.openbus.core.ORBInitializer}.
+Essa classe é responsável por instanciar e configurar o \orb{} e o \emph{OpenBusContext}.
+
+Nas próximas seções veremos o uso dessas classes em mais detalhes.
+
+\subsection{Primeiros Passos}
+
+Basicamente há dois tipos de aplicações distribuídas: uma que oferta serviços e outra que consome serviços, sendo possível e natural uma aplicação híbrida que tanto oferte quanto consuma.
+Para ambos os tipos, a API do assistente tenta facilitar toda funcionalidade comum.
+
+O uso do Assistente será demonstrado com base na demo Hello do \assistant{}.
+Propositalmente esta é uma demo muito simplória, que é composta de um processo cliente e outro servidor.
+O servidor oferta um serviço do tipo ``Hello'' num determinado barramento, enquanto que o cliente procura por este serviço no barramento e o utiliza.
+Quando isso acontece, o servidor imprime na saída padrão a frase ``Hello World!''.
+Posteriormente, alteraremos o exemplo para que imprima a frase ``Hello <nome-da-entidade-cliente>!''.
+
+\subsubsection{Autenticação em um Barramento}
+
+O primeiro passo de qualquer aplicação que utilize um barramento \openbus{} através do \assistant{} é se autenticar. Atualmente existem três modos de autenticação:
+
+\begin{itemize}
+  \item Par usuário e senha.
+  \item Certificado digital.
+  \item Utilização de autenticação compartilhada.
+\end{itemize}
+
+O primeiro é destinado normalmente a clientes que estejam acessando o barramento à procura de um serviço.
+O segundo é mais adequado a processos servidor que registrarão um determinado serviço no barramento.
+Já o terceiro é útil para aplicações que dependam de terceiros para realizar uma autenticação, ou seja, não tenham acesso a um par usuário/senha nem a um certificado, mas sim a um  terceiro elemento que se responsabilize pela autenticação dessa entidade.
+
+No caso da autenticação via certificado, o responsável pelo serviço deve previamente encaminhar ao administrador do barramento o certificado do serviço, ou seja, um arquivo especial que contenha a chave pública do serviço.
+
+Um exemplo do código necessário para a autenticação em um barramento pode ser visto no Código~\ref{lst:autent}.
+
+\begin{samplelisting}[language=Java]{autent}{Autenticação em um Barramento}
+String host = args[0];
+int port = Integer.parseInt(args[1]);
+String entity = args[2];
+String privateKeyFile = args[3];
+PrivateKey privateKey = 
+  OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+
+final Assistant assist =
+  Assistant.createWithPrivateKey(host, port, entity, privateKey);
+\end{samplelisting}
+
+Note que estamos utilizando um método estático de fábrica para instânciar o assistente, onde são necessários quatro parâmetros obrigatórios:
+
+\begin{description}
+  \item [host] Endereço do barramento.
+  \item [port] Porta do barramento.
+  \item [entity] Nome da entidade a ser autenticada ao barramento.
+Esse nome deve ser o nome que foi associado previamente ao certificado digital, junto ao administrador do barramento.
+  \item [privateKey] Chave privada associada ao certificado digital cadastrado no barramento.
+\end{description}
+
+Uma instância que implemente a interface \emph{tecgraf.openbus.PrivateKey} deve ser construída através da classe utilitária \emph{tecgraf.openbus.core.OpenBusPrivateKey}, que contém métodos para se obter uma chave privada através de uma sequência de \emph{bytes} ou de um arquivo.
+
+Como vimos anteriormente, após a construção de \emph{tecgraf.openbus.assistant.Assistant}, a autenticação não necessariamente já terá ocorrido, pois a mesma é feita assincronamente e pode se repetir indefinidamente, sem intervenção do usuário.
+O \assistant{} assume que a aplicação pretende se manter autenticada por todo o tempo em que o \assistant{} se mantiver vivo.
+Por isso, qualquer erro que implique na perda de autenticação será tratado pelo \assistant{}, que tentará se autenticar novamente até conseguir.
+Essa é uma das principais vantagens de se usar o \assistant{}.
+
+
+\subsubsection{Registro de Ofertas}
+
+O propósito principal do \assistant{} para um servidor é o de autenticar a um barramento \openbus{} e ofertar os serviços no Registro de Ofertas.
+
+Um serviço pode ser ofertado no barramento através de uma lista de propriedades e de uma referência a um componente \scs{}.
+A lista de propriedades pode ser utilizada para adicionar características para o serviço, a fim de facilitar a identificação por parte dos clientes.
+
+A arquitetura do Openbus é baseada no modelo de componentes \scs{}.
+Os serviços são de fato representados por componentes, que podem apresentar distintas facetas (interfaces).
+Sendo assim, o primeiro passo para o registro de um serviço é criar um componente que represente esse serviço.
+Maiores informações  sobre a criação de componentes \scs{} podem ser obtidas nos tutoriais desse projeto. Um exemplo de criação de componente pode ser visto no Código~\ref{lst:component}.
+
+\begin{samplelisting}[language=Java]{component}{Exemplo de criação de um componente \scs{}}
+// criando o serviço a ser ofertado
+// - ativando o POA
+POA poa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+poa.the_POAManager().activate();
+// - construindo o componente
+ComponentId id =
+  new ComponentId("Hello", (byte) 1, (byte) 0, (byte) 0, "java");
+ComponentContext component = new ComponentContext(orb, poa, id);
+// Cria a faceta Hello para o componente.
+// A classe HelloImpl deve ser implementada de acordo com a especificação do serviço Hello.
+component.addFacet("Hello", HelloHelper.id(), new HelloImpl());
+\end{samplelisting}
+
+A lista de propriedades referentes ao serviço deve ser descrita numa lista de estruturas do tipo \emph{ServiceProperty}.
+Um  exemplo de registro de uma oferta pode ser conferido no Código~\ref{lst:registering}.
+
+\begin{samplelisting}[language=Java]{registering}{Registro de uma Oferta de Serviço}
+// registrando serviço no barramento
+ServiceProperty[] serviceProperties =
+  new ServiceProperty[] { new ServiceProperty("offer.domain", "Demo Hello") };
+// usa o assistente do OpenBus para registrar a oferta.
+assist.registerService(component.getIComponent(), serviceProperties);
+\end{samplelisting}
+
+Para finalizar a implementação do nosso servidor, falta apenas implementarmos o serviço \emph{Hello} de fato, representado pela classe \emph{HelloImpl} em nosso exemplo.
+Começaremos com uma implementação que apenas imprime localmente ``Hello World!'' para qualquer chamada recebida. O código pode ser visto no Código~\ref{lst:hello}.
+
+\begin{samplelisting}[language=Java]{hello}{Implementação da faceta Hello}
+public final class HelloImpl extends HelloPOA {
+  public HelloImpl() {
+  }
+  @Override
+  public void sayHello() {
+    System.out.println("Hello World!");
+  }
+}
+\end{samplelisting}
+
+É interessante (mas não obrigatório) garantir o término correto das conexões do \orb{}.
+Para isso, aconselhamos a inclusão de uma thread de finalização no Runtime da JVM.
+Um exemplo pode ser conferido no Código ~\ref{lst:shutdown}.
+
+\begin{samplelisting}[language=Java]{shutdown}{Exemplo de uma thread de finalização do \orb{}.}
+final ORB orb = assist.orb();
+// - criando thread para parar e destruir o ORB ao fim da execução do processo 
+Thread shutdown = new Thread() {
+  @Override
+  public void run() {
+    assist.shutdown();
+    orb.shutdown(true);
+    orb.destroy();
+  }
+};
+Runtime.getRuntime().addShutdownHook(shutdown);
+\end{samplelisting}
+
+Até este ponto, o servidor basicamente se autenticou ao barramento e registrou seu serviço ``Hello''.
+O último passo necessário para finalizar o código do servidor é habilitar o processo a escutar as requisições CORBA que serão direcionadas para o serviço ofertado, o que pode ser feito diparando o método \emph{run} do \orb{} em uma thread separada, como demonstrado pelo código~\ref{lst:run}.
+
+\begin{samplelisting}[language=Java]{run}{Exemplo de thread para disparar o método \emph{run} do \orb{}.}
+// - disparando a thread para que o ORB atenda requisições
+Thread run = new Thread() {
+  @Override
+  public void run() {
+    orb.run();
+  }
+};
+run.start();
+\end{samplelisting}
+
+\subsubsection{Processo Cliente}
+
+Com o servidor pronto, é necessário agora construir um consumidor deste serviço. Alguém que irá buscar o serviço no Registro de Ofertas e chamar \emph{sayHello()}, que é o que o nosso serviço atualmente faz.
+
+Para tal precisamos, assim como no servidor, autenticarmo-nos ao barramento.
+Porém, as coincidências acabam aí.
+No cliente não criaremos \emph{servants} nem criaremos ofertas, apenas faremos uma busca e, de posse da oferta, a utilizaremos.
+
+Vejamos novamente a autenticação, mas desta vez de nosso cliente, no Código~\ref{lst:clientauth}.
+
+\begin{samplelisting}[language=Java]{clientauth}{Autenticação da Aplicação Cliente}
+String host = args[0];
+int port = Integer.parseInt(args[1]);
+String entity = args[2];
+String password = args[3];
+
+final Assistant assist =
+  Assistant.createWithPassword(host, port, entity, password.getBytes());
+\end{samplelisting}
+
+Como vimos, a instanciação da classe \emph{tecgraf.openbus.assistant.Assistant} coloca o \assistant{} em responsabilidade por nos autenticar ao barramento de forma assíncrona.
+Agora, nos resta fazer uso do Registro de Ofertas através dele.
+Para fazermos uma busca no barramento por serviços, utilizamos o método \emph{findServices}.
+
+Para podermos fazer a busca, precisamos saber o que buscar.
+Sabemos que nosso serviço possui uma faceta chamada ``Hello'', que o mesmo se autenticou no barramento com um nome de entidade específico, e que foi especificado o valor ``Demo Hello'' para a propriedade ``offer.domain''.
+As duas primeiras informações correspondem aos valores das propriedades automáticas ``openbus.offer.entity'' e ``openbus.component.facet'' respectivamente.
+De posse dessa lista de propriedades, podemos realizar a busca.
+Um exemplo pode ser conferido no Código~\ref{lst:clientsearch}.
+
+\begin{samplelisting}[language=Java]{clientsearch}{Busca por Ofertas de Serviço}
+String serverEntity = "nome-da-entidade-servidor"
+ServiceProperty[] properties = new ServiceProperty[3];
+properties[0] = new ServiceProperty("offer.offer.entity", serverEntity);
+properties[1] = new ServiceProperty("offer.component.facet", "Hello");
+properties[2] = new ServiceProperty("offer.domain", "Demo Hello");
+ServiceOfferDesc[] services = assist.findServices(properties, -1);
+\end{samplelisting}
+
+O método \emph{findServices} de busca de serviços recebe dois parâmetros:
+uma lista de propriedades e um inteiro que representa o número
+de re-tentativas que a função deve fazer em caso de erros. Esse número
+pode ser ``-1'', que indica que a função deve tentar indefinidamente;
+pode ser o número ``0'', que indica que a função deve retornar uma
+exceção se qualquer falha ocorrer e nenhuma nova tentativa se a mesma
+falhar; e qualquer número maior que zero, que indica o número de novas
+tentativas em caso de falhas. 
+Caso o número de re-tentativas se esgote, a última exceção recebida será lançada.
+
+Como visto anteriormente, a oferta de serviço contém uma referência para um componente \scs{} ou, mais especificamente, para sua faceta ``IComponent''.
+Como esse componente pode apresentar diversas facetas, o usuário deve obter a faceta que deseja utilizar.
+No exemplo há somente uma faceta além das facetas básicas do modelo \scs{}, chamada ``Hello''.
+A faceta recebida na oferta, ``IComponent'', oferece os métodos (\emph{getFacet} e \emph{getFacetByName}) para que o usuário possa obter um objeto \corba{} que represente a faceta desejada.
+De posse do objeto \corba{}, o usuário deve efetuar um \emph{narrow} para mapeá-lo para a interface desejada e, daí em diante, o programador estará apto a utilizar essa faceta/serviço.
+
+É importante notar que, apesar do \assistant{} ajudar no tratamento de erros das funcionalidades mais comuns, a aplicação deve tratar por conta própria os erros que podem ocorrer ao realizar chamadas \corba{} diretamente a um objeto remoto.
+As chamadas \emph{getFacet} (ou \emph{getFacetByName}) e \emph{sayHello} se enquadram nesse caso, portanto precisam do tratamento adequado.
+Como a operação precisa coordenar programas diferentes, rodando em arquiteturas e localidades diferentes, inúmeras falhas são possíveis, sendo as mais comuns uma falha de comunicação física (por exemplo, o cabo de rede desconectado).
+O serviço pode também não estar mais funcionando corretamente, ou ter sido finalizado.
+
+Portanto, toda chamada remota deve estar protegida, de algum modo, por tratamentos de erros.
+O tratamento de erro em \corba{} é feito através de exceções.
+A exceção \emph{CORBA::TRANSIENT} significa que o serviço não conseguiu se comunicar com o outro ponto; \emph{CORBA::COMM\_FAILURE} significa a mesma coisa, mas a conexão não conseguiu ser iniciada por algum motivo;  \emph{CORBA::OBJECT\_NOT\_EXIST} significa que o serviço que deveria prover esse objeto \corba{} não possui esse objeto em sua memória, e a sua referência deve ser descartada.
+Outras exceções herdam de \emph{CORBA::SystemException}. Um exemplo do tratamento de erros adequado pode ser visto no Código~\ref{lst:clientfacet}.
+
+\begin{samplelisting}[language=Java]{clientfacet}{Acesso à Faceta Desejada}
+// analiza as ofertas encontradas
+for (ServiceOfferDesc offerDesc : services) {
+  try {
+    org.omg.CORBA.Object helloObj =
+      offerDesc.service_ref.getFacet(HelloHelper.id());
+    if (helloObj == null) {
+      System.out
+        .println("o serviço encontrado não provê a faceta ofertada");
+      continue;
+    }
+    Hello hello = HelloHelper.narrow(helloObj);
+    hello.sayHello();
+  }
+  catch (TRANSIENT e) {
+    System.err.println("o serviço encontrado encontra-se indisponível");
+  }
+  catch (COMM_FAILURE e) {
+    System.err.println("falha de comunicação com o serviço encontrado");
+  }
+  catch (NO_PERMISSION e) {
+    switch (e.minor) {
+      case NoLoginCode.value:
+        System.err.println(String.format(
+          "não há um login de '%s' válido no momento", entity));
+        break;
+      case UnknownBusCode.value:
+        System.err
+          .println("o serviço encontrado não está mais logado ao barramento");
+        break;
+      case UnverifiedLoginCode.value:
+        System.err
+          .println("o serviço encontrado não foi capaz de validar a chamada");
+        break;
+      case InvalidRemoteCode.value:
+        System.err
+          .println("integração do serviço encontrado com o barramento está incorreta");
+        break;
+    }
+  }
+}
+\end{samplelisting}
+
+Por fim, podemos finalizar o \assistant{} para que seja feito o \emph{logout} no barramento, como exemplificado no Código~\ref{lst:logout}.
+
+\begin{samplelisting}[language=Java]{logout}{Finalizando o \assistant{}}
+assist.shutdown();
+\end{samplelisting}
+
+Nesse ponto, podemos executar o servidor e em seguida o cliente.
+Assim que o cliente realizar a chamada \emph{sayHello}, o servidor imprimirá na tela a mensagem ``Hello World!''.
+
+\subsubsection{Acessando a cadeia de chamadas para identificar o cliente}
+
+A maior evolução no barramento \openbus{} na versão 2.0 foi a reformulação do sistema de segurança.
+Com este novo sistema, é possível para um serviço saber qual a entidade que fez a chamada, e também é possível para algum serviço intermediário passar para um serviço do qual ele é cliente a identidade de quem está usando esse intermediário. 
+Isso cria uma cadeia de entidades que pode ser lida pelo serviço final para autorizar ou não a chamada.
+
+Veremos o caso mais simples, modificando o serviço \emph{Hello} que implementamos anteriormente para imprimir a mensagem ``Hello <nome-da-entidade-cliente>!'' ao invés de ``Hello World!''. 
+Uma aplicação mais complexa poderia usar essa informação para escolher de qual banco de dados pegaria os dados, ou como faria a autenticação para obter os dados ou simplesmente recusar a operação para determinadas entidades.
+
+Relembrando, nosso \emph{servant} ``Hello'' foi implementado como descrito no Código~\ref{lst:hello}.
+
+Os métodos relativos a cadeias ficam na classe \emph{OpenBusContext}, como mencionado anteriormente.
+São eles: \emph{getCallerChain}, \emph{joinChain}, \emph{exitChain} e \emph{getJoinedChain}.
+
+Faremos uso do método \emph{getCallerChain}, que retorna a cadeia de chamadas relativa à chamada atual.
+Como comentado anteriormente na subseção~\ref{api}, cada instância de \orb{} possui uma instância de \emph{OpenBusContext} associado.
+O Código~\ref{lst:context} ilustra como recupera-se essa instância a partir do \orb{}.
+
+\begin{samplelisting}[language=Java]{context}{Acessando o \emph{OpenBusContext}.}
+ORB orb = assist.orb();
+// recuperando o gerente de contexto de chamadas à barramentos 
+OpenBusContext context =
+  (OpenBusContext) orb.resolve_initial_references("OpenBusContext");
+\end{samplelisting}
+
+Em posse do \emph{OpenBusContext}, podemos fazer a chamada a \emph{getCallerChain} em \emph{sayHello}.
+Um exemplo pode ser visto no Código~\ref{lst:chain}
+
+\begin{samplelisting}[language=Java]{chain}{Implementação da faceta Hello acessando a cadeia relativa a uma chamada}
+public final class HelloImpl extends HelloPOA {
+  private OpenBusContext context;
+  public HelloImpl(OpenBusContext context) {
+    this.context = context;
+  }
+  @Override
+  public void sayHello() {
+    CallerChain callerChain = context.getCallerChain();
+    LoginInfo caller = callerChain.caller();
+    String hello = String.format("Hello %s!", caller.entity);
+    System.out.println(hello);
+  }
+}
+\end{samplelisting}
+
+Desta forma implementamos um serviço que imprime o nome da entidade que fez a chamada remota para nosso serviço.
+O código completo pode ser conferido na demo Hello do \assistant{}.
+
+
+\subsection{Configurações avançadas}
+
+\subsubsection{Definindo os níveis de log do \jacorb{}}
+
+o \jacorb{} utiliza o SLF4J para realizar seu mecanismo de logging. 
+O SLF4J é uma fachada de logging que pode ser utilizada em conjunto com outras soluções de logging arbitrárias, como Log4J, JCL, ou JDK.
+Para alterar para uma solução de logging diferente, basta incluir a biblioteca no \emph{classpath}.
+O sistema de logging padrão adotado na distribuição do \jacorb{} é o JDK. 
+
+As semânticas associadas aos níveis de log utilizados pelo \jacorb{} são:
+\begin{description}
+  \item [error] Eventos que sugerem um erro no \jacorb{} ou no código do usuário. Isto inclui, mas não restringe, erros fatais que ocasionarão o término do programa.
+  \item [warn] Eventos que demandam atenção mas são tratados corretamente de acordo com a especificação \corba{}. Por exemplo, término inesperado de uma conexão, falta de recurso (fila cheia), entre outros.
+  \item [info] Inicialização e término de subsistemas, realização e finalização de conexões, registro de objetos no POA.
+  \item [debug] Informações que podem ser necessárias para a identifícação de erros no \jacorb{} ou código do usuário. 
+  \item [trace] Não é utilizado pelo \jacorb{}, e é desencorajado pela equipe do SLF4J.
+\end{description}
+
+A propriedade \emph{jacorb.log.default.verbosity} especifica o nível em que as mensagens são registrados. O valor é um número de 0 a 4, onde 0 significa que não há registro, 1 significa apenas mensagens de erro, 2 significa mensagens de aviso (\emph{warning}), 3 significa mensagens de informação, e 4 significa mensagens de depuração. Os níveis mais elevados incluem também níveis mais baixos.
+
+A propriedade \emph{jacorb.logfile} define o arquivo a ser utilizado para registrar as mensagens de log. Caso a propriedade não seja configurada, as mensagens de log são direcionadas para a saída padrão.
+
+Maiores informações e opções sobre o mecanismo de log do \jacorb{} podem ser encontradas em sua documentação.~\cite{web:Jacorb}
+
+\subsubsection{Definindo os níveis de log da API}
+
+A API utiliza o log do Java, que possui os níveis de log descritos na classe \emph{java.util.logging.Level}.
+Para alterar programaticamente o nível de log da API deve-se chamar o método \emph{setLevel()} enviando o nível desejado como parâmetro.
+Um exemplo de configuração do log é apresentado no Código~\ref{lst:log}.
+Note que recuperamos o logger através do pacote ``tecgraf.openbus'', que é um pacote comum a todas as classes do SDK.
+
+\begin{samplelisting}[language=Java]{log}{Configurando o log da API.}
+Logger logger = Logger.getLogger("tecgraf.openbus");
+logger.setLevel(level);
+logger.setUseParentHandlers(false);
+ConsoleHandler handler = new ConsoleHandler();
+handler.setLevel(level);
+logger.addHandler(handler);
+\end{samplelisting}
+
+
+\subsubsection{Definindo as propriedades opcionais do Assistente}
+
+Ao instanciar o \assistant{} podemos definir um conjunto de propriedades, através da classe \emph{tecgraf.openbus.assistant.AssistantParams}, para configurar o assistente.
+Essa classe fornece uma série de campos opcionais que podem ser configurados antes da instanciação do \assistant{}. São eles:
+
+\begin{description}
+  \item [interval] Tempo em segundos indicando o tempo mínimo de espera antes de cada nova tentativa após uma falha na execução de uma tarefa; não pode ser menor do que 1 segundo.
+  \item [orb] O \orb{} a ser utilizado pelo assistente para realizar suas tarefas.
+  \item [connprops] Propriedades opcionais da conexão utilizada internamente. Para mais detalhes, consulte a documentação da API básica.
+  \item [callback] Objeto de callback que recebe notificações de falhas das tarefas realizadas pelo assistente.
+\end{description}
+
+% \include{glossary}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,241 @@
+%
+%  Package for inclusion of figures and source code samples
+%
+%  Created by Renato Maia on 2007-05-21.
+%  Copyright (c) 2007 PUC-Rio. All rights reserved.
+%
+
+% Package for including code in the document
+\usepackage{listings}
+
+% Package used to write text with different colors
+\usepackage{color}
+
+% Package used to control floating elements
+\usepackage{float}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+\usepackage{shadow}
+
+%--- Language Definitions ------------------------------------------------------
+
+\lstdefinelanguage{CSharp}{
+showspaces=false,
+showtabs=false,
+breaklines=true,
+showstringspaces=false,
+breakatwhitespace=true,
+escapeinside={(*@}{@*)},
+commentstyle=\color{greencomments},
+keywordstyle=\color{bluekeywords}\bfseries,
+stringstyle=\color{redstrings},
+basicstyle=\ttfamily
+}
+
+
+\lstdefinelanguage{lua}{%
+	morekeywords=[1]{%
+		do, end, while, repeat, until, if, then, else, elseif, return, break, for,%
+		in, function, local, nil, false, true, and, or, not%
+	},%
+	%morekeywords=[2]{%
+	%	assert, collectgarbage, dofile, error, getfenv, getmetatable, gcinfo,%
+	%	loadfile, ipairs, loadlib, loadstring, next, pairs, pcall, print, rawequal,%
+	%	rawget, rawset, require, select, setfenv, setmetatable, tonumber, tostring,%
+	%	type, unpack, xpcall,%
+	%	coroutine.create, coroutine.resume, coroutine.status, coroutine.wrap,%
+	%	coroutine.yield,%
+	%	string.byte, string.char, string.dump, string.find, string.len,%
+	%	string.lower, string.rep, string.sub, string.upper, string.format,%
+	%	string.gfind, string.gsub,%
+	%	table.concat, table.foreach, table.foreachi, table.getn, table.sort,%
+	%	table.insert, table.remove, table.setn,%
+	%	math.abs, math.acos, math.asin, math.atan, math.atan2, math.ceil, math.cos,%
+	%	math.deg, math.exp, math.floor, math.log, math.log10, math.max, math.min,%
+	%	math.mod, math.pow, math.rad, math.sin, math.sqrt, math.tan, math.frexp,%
+	%	math.ldexp, math.random, math.randomseed,%
+	%	io.close, io.flush, io.input, io.lines, io.open, io.output, io.read,%
+	%	io.tmpfile, io.type, io.write,%
+	%	os.clock, os.date, os.difftime, os.execute, os.exit, os.getenv, os.remove,%
+	%	os.rename, os.setlocale, os.time, os.tmpname,%
+	%	debug.debug, debug.gethook, debug.getinfo, debug.getlocal,%
+	%	debug.getupvalue, debug.setlocal, debug.setupvalue, debug.sethook,%
+	%	debug.traceback%
+	%},%
+	sensitive=true,%
+	morestring=[b]{"},%
+	morestring=[b]{'},%
+	morecomment=[l]--,%
+	morecomment=[s]{--\[\[}{\]\]}%
+}
+
+%--- Code Style Specifications -------------------------------------------------
+
+\lstdefinestyle{numbered}{
+	numbers=left,%
+	stepnumber=1,%
+	numberfirstline=true,%
+	numbersep=5pt,%
+	numberstyle=\tiny,%
+}
+
+\lstdefinestyle{standard}{
+	boxpos=b,%
+	basicstyle=\scriptsize\sffamily,%
+	showstringspaces=false,%
+	xleftmargin=12pt,%
+	tabsize=2,%
+	escapechar=\$%
+}
+
+\lstdefinestyle{monochrome}{
+	style=standard,%
+	keywordstyle=[1]\bfseries,%
+	keywordstyle=[2]\bfseries,%
+	commentstyle=\itshape,%
+	stringstyle=\itshape%
+}
+
+\lstdefinestyle{grayscale}{
+	style=standard,%
+	keywordstyle=[1]\color[gray]{0.2}\bfseries,%
+	keywordstyle=[2]\bfseries,%
+	commentstyle=\color[gray]{0.4}\itshape,%
+	stringstyle=\color[gray]{0.3}\itshape%
+}
+
+\lstdefinestyle{colorful}{
+	style=standard,%
+	keywordstyle=[1]\color[rgb]{0,0,0.6}\bfseries,%
+	keywordstyle=[2]\color[rgb]{0.6,0,0}\bfseries,%
+	commentstyle=\color[rgb]{0.3,0.3,1}\itshape,%
+	stringstyle=\color[rgb]{0,0.3,0}\itshape%
+}
+
+%--- Input Listings ------------------------------------------------------------
+
+\newcommand{\@srclang}{CSharp}
+\newcommand{\codelanguage}[1]{\renewcommand{\@srclang}{#1}}
+
+\newcommand{\@srcstyle}{monochrome}
+\newcommand{\codestyle}[1]{\renewcommand{\@srcstyle}{#1}}
+
+\newcommand{\@srcfloatplacement}{htbH}
+\newcommand{\codeplacement}[1]{\renewcommand{\@srcfloatplacement}{#1}}
+
+\newcommand{\@srcdir}{src}
+\newcommand{\sourcebase}[1]{\renewcommand{\@srcdir}{#1}}
+
+\lstnewenvironment{samplecode}[1][language=\@srclang]
+	{\lstset{style=\@srcstyle,#1}}
+	{}
+
+\lstnewenvironment{numberedcode}[1][language=\@srclang]
+	{\lstset{style=numbered,style=\@srcstyle,#1}}
+	{}
+
+\lstnewenvironment{samplelisting}[3][language=\@srclang]
+	{\lstset{
+		float=\@srcfloatplacement,caption=#3,label=lst:#2,%
+		style=numbered,style=\@srcstyle,#1}}
+	{}
+
+% This does not work, and I can't say why...
+\lstnewenvironment{samplecodefig}[3][language=\@srclang]{%
+%	\begin{figure}%
+%		\caption{#3}\label{fig:#2}%
+		\lstset{style=numbered,style=\@srcstyle,#1}%
+}{%
+%	\end{figure}%
+}
+
+\newcommand{\inputcode}[2][language=\@srclang]
+	{\lstinputlisting[
+		style=\@srcstyle,#1]{\@srcdir/#2}}
+
+\newcommand{\inputnumcode}[2][language=\@srclang]
+	{\lstinputlisting[
+		style=numbered,style=\@srcstyle,#1]{\@srcdir/#2}}
+
+\newcommand{\inputlisting}[3][language=\@srclang]
+	{\lstinputlisting[
+		float=\@srcfloatplacement,caption=#3,label=lst:#2,%
+		style=numbered,style=\@srcstyle,#1]{\@srcdir/#2}}
+
+\newcommand{\inputcodefig}[3][language=\@srclang]{
+	\begin{figure}
+		\caption{#3}\label{fig:#2}
+		\inputnumcode[#1]{#2}
+	\end{figure}
+}
+
+\newcommand{\inputcodefigex}[3][language=\@srclang]{
+  \sboxsep = 15pt
+	\begin{figure}
+   \begin{center}
+		\shabox{\inputnumcode[#1]{#2}}
+		\caption{#3}\label{fig:#2}
+	\end{center}
+	\end{figure}
+}
+
+
+%--- Input Figures -------------------------------------------------------------
+
+\floatplacement{figure}{hbtH}
+
+\newcommand{\@imgdir}{img}
+\newcommand{\imagedir}[1]{\renewcommand{\@imgdir}{#1}}
+
+\newcommand{\@imgscale}{1}
+\newcommand{\imagescale}[1]{\renewcommand{\@imgscale}{#1}}
+
+\newenvironment{placefigure}[2]{
+	\begin{figure}
+		\caption{#2}\label{fig:#1}
+}{
+	\end{figure}
+}
+
+\newenvironment{spanfigure}[2]{
+	\begin{figure*}
+		\caption{#2}\label{fig:#1}
+}{
+	\end{figure*}
+}
+
+\newcommand{\inputimage}[3][scale=\@imgscale]{
+	\begin{placefigure}{#2}{#3}
+		\centering\includegraphics[#1]{\@imgdir/#2}
+	\end{placefigure}
+}
+
+\newcommand{\spanimage}[3][scale=\@imgscale]{
+	\begin{spanfigure}{#2}{#3}
+		\centering\includegraphics[#1]{\@imgdir/#2}
+	\end{spanfigure}
+}
+
+\newcommand{\twoimages}[4]{
+	\begin{placefigure}{#1}{#2}
+		\def\tabcolsep{0pt}
+		\begin{tabular}{cc}
+			\includegraphics[width=\textwidth.5]{img/#3} &
+			\includegraphics[width=\textwidth.5]{img/#4}
+		\end{tabular}
+	\end{placefigure}
+}
+
+%--- Input Text ----------------------------------------------------------------
+
+\newcommand{\@texdir}{.}
+\newcommand{\textdir}[1]{\renewcommand{\@texdir}{#1}}
+
+\newcommand{\inputsection}[2]{\section{#2}\label{sec:#1}\input{\@texdir/#1.tex}}
+\newcommand{\inputchapter}[2]{\chapter{#2}\label{cha:#1}\input{\@texdir/#1.tex}}
+
+%--- Input Tables --------------------------------------------------------------
+
+\floatplacement{table}{hbtH}
