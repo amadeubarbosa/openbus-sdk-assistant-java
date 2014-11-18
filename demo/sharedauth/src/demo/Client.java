@@ -127,7 +127,7 @@ public final class Client {
      * funcionarão, portanto uma outra forma mais dinâmica seria mais eficaz. No
      * entanto, isso foge ao escopo dessa demo.
      */
-    byte[] data = context.encodeSharedAuthSecret(secret);
+    byte[] data = context.encodeSharedAuth(secret);
     FileOutputStream out = null;
     try {
       out = new FileOutputStream(file);

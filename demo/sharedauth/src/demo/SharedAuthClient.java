@@ -129,7 +129,7 @@ public class SharedAuthClient {
               }
               offset += read;
             }
-            return new AuthArgs(context.decodeSharedAuthSecret(data));
+            return new AuthArgs(context.decodeSharedAuth(data));
           }
           finally {
             is.close();
