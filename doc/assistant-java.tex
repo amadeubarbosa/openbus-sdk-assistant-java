@@ -251,8 +251,8 @@ String host = args[0];
 int port = Integer.parseInt(args[1]);
 String entity = args[2];
 String privateKeyFile = args[3];
-PrivateKey privateKey = 
-  OpenBusPrivateKey.createPrivateKeyFromFile(privateKeyFile);
+RSAPrivateKey privateKey = 
+  Cryptography.getInstance().readKeyFromFile(privateKeyFile);
 
 final Assistant assist =
   Assistant.createWithPrivateKey(host, port, entity, privateKey);
@@ -268,7 +268,7 @@ Esse nome deve ser o nome que foi associado previamente ao certificado digital, 
   \item [privateKey] Chave privada associada ao certificado digital cadastrado no barramento.
 \end{description}
 
-Uma instância que implemente a interface \emph{tecgraf.openbus.PrivateKey} deve ser construída através da classe utilitária \emph{tecgraf.openbus.core.OpenBusPrivateKey}, que contém métodos para se obter uma chave privada através de uma sequência de \emph{bytes} ou de um arquivo.
+É possível se obter uma instância da chave privada (\emph{RSAPrivateKey}) através da classe utilitária \emph{tecgraf.openbus.security.Cryptography}, que contém métodos para se obter uma chave privada através de uma sequência de \emph{bytes} ou de um arquivo.
 
 Como vimos anteriormente, após a construção de \emph{tecgraf.openbus.assistant.Assistant}, a autenticação não necessariamente já terá ocorrido, pois a mesma é feita assincronamente e pode se repetir indefinidamente, sem intervenção do usuário.
 O \assistant{} assume que a aplicação pretende se manter autenticada por todo o tempo em que o \assistant{} se mantiver vivo.
