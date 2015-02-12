@@ -43,10 +43,10 @@
 
   <scm>
     <developerConnection>
-        scm:svn:https://subversion.tecgraf.puc-rio.br/engdist/openbus/sdk/assistant/java/trunk
+        scm:svn:https://subversion.tecgraf.puc-rio.br/engdist/openbus/sdk/assistant/java/branches/02_00_01
     </developerConnection>
     <url>
-        scm:svn:https://subversion.tecgraf.puc-rio.br/viewvc/engdist/openbus/sdk/assistant/java/trunk
+        scm:svn:https://subversion.tecgraf.puc-rio.br/viewvc/engdist/openbus/sdk/assistant/java/branches/02_00_01
     </url>
   </scm>
 
