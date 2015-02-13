@@ -26,19 +26,19 @@ import tecgraf.openbus.InvalidLoginCallback;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.core.ORBInitializer;
-import tecgraf.openbus.core.v2_0.services.ServiceFailure;
-import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
-import tecgraf.openbus.core.v2_0.services.access_control.InvalidLoginCode;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
-import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
-import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
-import tecgraf.openbus.core.v2_0.services.offer_registry.InvalidProperties;
-import tecgraf.openbus.core.v2_0.services.offer_registry.InvalidService;
-import tecgraf.openbus.core.v2_0.services.offer_registry.OfferRegistry;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOffer;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
-import tecgraf.openbus.core.v2_0.services.offer_registry.UnauthorizedFacets;
+import tecgraf.openbus.core.v2_1.services.ServiceFailure;
+import tecgraf.openbus.core.v2_1.services.access_control.AccessDenied;
+import tecgraf.openbus.core.v2_1.services.access_control.InvalidLoginCode;
+import tecgraf.openbus.core.v2_1.services.access_control.LoginInfo;
+import tecgraf.openbus.core.v2_1.services.access_control.MissingCertificate;
+import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
+import tecgraf.openbus.core.v2_1.services.offer_registry.InvalidProperties;
+import tecgraf.openbus.core.v2_1.services.offer_registry.InvalidService;
+import tecgraf.openbus.core.v2_1.services.offer_registry.OfferRegistry;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOffer;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.offer_registry.UnauthorizedFacets;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
 import tecgraf.openbus.exception.InvalidLoginProcess;
 import tecgraf.openbus.exception.InvalidPropertyValue;
@@ -194,12 +194,13 @@ public abstract class Assistant {
    * @param port Porta onde os serviços núcleo do barramento estão executando.
    * @param entity Identificador da entidade a ser autenticada.
    * @param password Senha de autenticação no barramento da entidade.
+   * @param domain Identificador do domínio de autenticação.
    * 
    * @return um novo assistente.
    */
   public static Assistant createWithPassword(String host, int port,
-    final String entity, final byte[] password) {
-    return createWithPassword(host, port, entity, password, null);
+    final String entity, final byte[] password, final String domain) {
+    return createWithPassword(host, port, entity, password, domain, null);
   }
 
   /**
@@ -215,13 +216,15 @@ public abstract class Assistant {
    * @param port Porta onde os serviços núcleo do barramento estão executando.
    * @param entity Identificador da entidade a ser autenticada.
    * @param password Senha de autenticação no barramento da entidade.
+   * @param domain Identificador do domínio de autenticação.
    * @param params Parâmetros opicionais de configuração do assistente
    * 
    * @return um novo assistente.
    */
   public static Assistant createWithPassword(String host, int port,
-    final String entity, final byte[] password, AssistantParams params) {
-    final AuthArgs authArgs = new AuthArgs(entity, password);
+    final String entity, final byte[] password, final String domain,
+    AssistantParams params) {
+    final AuthArgs authArgs = new AuthArgs(entity, password, domain);
     return new Assistant(host, port, params) {
 
       @Override
@@ -574,7 +577,7 @@ public abstract class Assistant {
       if (args != null) {
         switch (args.mode) {
           case AuthByPassword:
-            conn.loginByPassword(args.entity, args.password);
+            conn.loginByPassword(args.entity, args.password, args.domain);
           case AuthByCertificate:
             conn.loginByCertificate(args.entity, args.privkey);
           case AuthBySharing:

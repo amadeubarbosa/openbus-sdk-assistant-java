@@ -6,13 +6,13 @@ import org.omg.CORBA.TRANSIENT;
 import org.omg.CORBA.ORBPackage.InvalidName;
 
 import tecgraf.openbus.assistant.Assistant;
-import tecgraf.openbus.core.v2_0.services.ServiceFailure;
-import tecgraf.openbus.core.v2_0.services.access_control.InvalidRemoteCode;
-import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnknownBusCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnverifiedLoginCode;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.ServiceFailure;
+import tecgraf.openbus.core.v2_1.services.access_control.InvalidRemoteCode;
+import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnknownBusCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnverifiedLoginCode;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
 
@@ -57,10 +57,16 @@ public final class HelloClient {
     if (args.length > 3) {
       password = args[3];
     }
+    // - dominio (opcional)
+    String domain = "openbus";
+    if (args.length > 4) {
+      domain = args[4];
+    }
 
     // recuperando o assistente
     final Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password.getBytes());
+      Assistant.createWithPassword(host, port, entity, password.getBytes(),
+        domain);
 
     // busca por serviço
     ServiceProperty[] properties = new ServiceProperty[1];

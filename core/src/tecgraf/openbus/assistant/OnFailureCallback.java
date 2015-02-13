@@ -1,7 +1,7 @@
 package tecgraf.openbus.assistant;
 
 import scs.core.IComponent;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 
 /**
  * Callback de notificação de falhas capturadas pelo assistente.

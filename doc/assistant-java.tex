@@ -376,7 +376,7 @@ String entity = args[2];
 String password = args[3];
 
 final Assistant assist =
-  Assistant.createWithPassword(host, port, entity, password.getBytes());
+  Assistant.createWithPassword(host, port, entity, password.getBytes(), domain);
 \end{samplelisting}
 
 Como vimos, a instanciação da classe \emph{tecgraf.openbus.assistant.Assistant} coloca o \assistant{} em responsabilidade por nos autenticar ao barramento de forma assíncrona.

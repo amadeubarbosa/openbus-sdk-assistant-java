@@ -21,11 +21,11 @@ import tecgraf.openbus.Connection;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.core.ORBInitializer;
-import tecgraf.openbus.core.v2_0.services.access_control.AccessDenied;
-import tecgraf.openbus.core.v2_0.services.access_control.LoginInfo;
-import tecgraf.openbus.core.v2_0.services.access_control.MissingCertificate;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.access_control.AccessDenied;
+import tecgraf.openbus.core.v2_1.services.access_control.LoginInfo;
+import tecgraf.openbus.core.v2_1.services.access_control.MissingCertificate;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.security.Cryptography;
 import tecgraf.openbus.util.Utils;
 
@@ -35,6 +35,7 @@ public class AssistantTest {
   private static int port;
   private static String entity;
   private static byte[] password;
+  private static String domain;
   private static String server;
   private static String privateKeyFile;
   private static RSAPrivateKey privateKey;
@@ -50,6 +51,7 @@ public class AssistantTest {
     port = Integer.valueOf(properties.getProperty("openbus.host.port"));
     entity = properties.getProperty("entity.name");
     password = properties.getProperty("entity.password").getBytes();
+    domain = properties.getProperty("user.password.domain", "testing");
     server = properties.getProperty("server.entity.name");
     privateKeyFile = properties.getProperty("server.private.key");
     privateKey = crypto.readKeyFromFile(privateKeyFile);
@@ -64,7 +66,7 @@ public class AssistantTest {
     String invHost = "unknown-host";
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(invHost, port, entity, password);
+      Assistant.createWithPassword(invHost, port, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
@@ -78,7 +80,7 @@ public class AssistantTest {
     int invPort = port + 111;
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(host, invPort, entity, password);
+      Assistant.createWithPassword(host, invPort, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
@@ -90,7 +92,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPasswordTest() {
     boolean failed = false;
     try {
-      Assistant.createWithPassword(host, port, null, password);
+      Assistant.createWithPassword(host, port, null, password, domain);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -98,7 +100,15 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-      Assistant.createWithPassword(host, port, entity, null);
+      Assistant.createWithPassword(host, port, entity, null, domain);
+    }
+    catch (IllegalArgumentException e) {
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+    failed = false;
+    try {
+      Assistant.createWithPassword(host, port, entity, password, null);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -182,7 +192,7 @@ public class AssistantTest {
   public void createTest() {
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password);
+      Assistant.createWithPassword(host, port, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
@@ -202,7 +212,8 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.orb = orb;
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     Assert.assertSame(params.orb, orb);
     boolean failed = false;
     try {
@@ -226,7 +237,8 @@ public class AssistantTest {
     context.setDefaultConnection(conn);
     boolean failed = false;
     try {
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -244,7 +256,7 @@ public class AssistantTest {
       "org.jacorb.orb.ORBSingleton");
     AssistantParams params = new AssistantParams();
     params.orb = ORB.init(args, props);
-    Assistant.createWithPassword(host, port, entity, password, params);
+    Assistant.createWithPassword(host, port, entity, password, domain, params);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -252,7 +264,8 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = Float.NaN;
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     assist.shutdown();
   }
 
@@ -261,7 +274,8 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = Float.POSITIVE_INFINITY;
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     assist.shutdown();
   }
 
@@ -270,7 +284,8 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = Float.NEGATIVE_INFINITY;
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     assist.shutdown();
   }
 
@@ -279,7 +294,8 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = 0.0f;
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     assist.shutdown();
   }
 
@@ -291,7 +307,8 @@ public class AssistantTest {
     params.interval = 1.0f;
     try {
       assist =
-        Assistant.createWithPassword(host, port, entity, password, params);
+        Assistant.createWithPassword(host, port, entity, password, domain,
+          params);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -486,9 +503,9 @@ public class AssistantTest {
           // connect using basic API
           OpenBusContext context =
             (OpenBusContext) orb().resolve_initial_references("OpenBusContext");
-          Connection conn = context.createConnection(host, port);
+          Connection conn = context.connectByAddress(host, port);
           context.setCurrentConnection(conn);
-          conn.loginByPassword(entity, password);
+          conn.loginByPassword(entity, password, domain);
           SharedAuthSecret secret = conn.startSharedAuth();
           conn.logout();
           return new AuthArgs(secret);
@@ -534,7 +551,8 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, params);
+      Assistant
+        .createWithPassword(host, port, entity, password, domain, params);
     SharedAuthSecret secret = assist.startSharedAuth(1);
     Assert.assertFalse(failed.get());
     Assert.assertNotNull(secret);
@@ -625,8 +643,8 @@ public class AssistantTest {
       }
     };
 
-    Assistant
-      .createWithPassword(host, port, "invalid-1", new byte[] {}, params);
+    Assistant.createWithPassword(host, port, "invalid-1", new byte[] {},
+      domain, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -761,7 +779,7 @@ public class AssistantTest {
 
     Assistant assistant =
       Assistant.createWithPassword(host, port, "invalid-2", new byte[] {},
-        params);
+        domain, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -817,7 +835,7 @@ public class AssistantTest {
 
     Assistant assistant =
       Assistant.createWithPassword(host, port, "invalid-3", new byte[] {},
-        params);
+        domain, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }

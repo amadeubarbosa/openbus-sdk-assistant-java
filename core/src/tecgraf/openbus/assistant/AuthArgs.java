@@ -31,6 +31,8 @@ public class AuthArgs {
   String entity;
   /** Senha */
   byte[] password;
+  /** Domínio */
+  String domain;
   /** Chave privada */
   RSAPrivateKey privkey;
   /** Segredo do compartilhamento de login */
@@ -41,14 +43,16 @@ public class AuthArgs {
    * 
    * @param entity Identificador da entidade a ser autenticada.
    * @param password Senha de autenticação no barramento da entidade.
+   * @param domain Identificador do domínio de autenticação.
    */
-  public AuthArgs(String entity, byte[] password) {
-    if (entity == null || password == null) {
+  public AuthArgs(String entity, byte[] password, String domain) {
+    if (entity == null || password == null || domain == null) {
       throw new IllegalArgumentException(
-        "Entidade e senha devem ser diferentes de nulo.");
+        "Entidade, senha e domínio devem ser diferentes de nulo.");
     }
     this.entity = entity;
     this.password = password;
+    this.domain = domain;
     this.mode = AuthMode.AuthByPassword;
   }
 

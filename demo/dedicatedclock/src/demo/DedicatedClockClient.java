@@ -11,13 +11,13 @@ import org.omg.CORBA.ORBPackage.InvalidName;
 
 import tecgraf.openbus.assistant.Assistant;
 import tecgraf.openbus.assistant.AssistantParams;
-import tecgraf.openbus.core.v2_0.services.ServiceFailure;
-import tecgraf.openbus.core.v2_0.services.access_control.InvalidRemoteCode;
-import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnknownBusCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnverifiedLoginCode;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.ServiceFailure;
+import tecgraf.openbus.core.v2_1.services.access_control.InvalidRemoteCode;
+import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnknownBusCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnverifiedLoginCode;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
 
@@ -75,10 +75,15 @@ public final class DedicatedClockClient {
     if (args.length > 3) {
       password = args[3];
     }
-    // - intervalo entre falhas
+    // - dominio (opcional)
+    String domain = "openbus";
     if (args.length > 4) {
+      domain = args[4];
+    }
+    // - intervalo entre falhas
+    if (args.length > 5) {
       try {
-        interval = Float.parseFloat(args[4]);
+        interval = Float.parseFloat(args[5]);
       }
       catch (NumberFormatException e) {
         System.out.println("Valor de [interval] deve ser um número");
@@ -87,9 +92,9 @@ public final class DedicatedClockClient {
       }
     }
     // - número máximo de tentativas
-    if (args.length > 5) {
+    if (args.length > 6) {
       try {
-        retries = Integer.parseInt(args[5]);
+        retries = Integer.parseInt(args[6]);
       }
       catch (NumberFormatException e) {
         System.out.println("Valor de [retries] deve ser um número");
@@ -103,7 +108,7 @@ public final class DedicatedClockClient {
     params.interval = interval;
     final Assistant assist =
       Assistant.createWithPassword(host, port, entity, password.getBytes(),
-        params);
+        domain, params);
 
     Long timestamp = null;
     // busca por serviço
@@ -202,5 +207,4 @@ public final class DedicatedClockClient {
     // Finaliza o assistente
     assist.shutdown();
   }
-
 }

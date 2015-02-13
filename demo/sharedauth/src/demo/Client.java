@@ -11,13 +11,13 @@ import org.omg.CORBA.ORBPackage.InvalidName;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.SharedAuthSecret;
 import tecgraf.openbus.assistant.Assistant;
-import tecgraf.openbus.core.v2_0.services.ServiceFailure;
-import tecgraf.openbus.core.v2_0.services.access_control.InvalidRemoteCode;
-import tecgraf.openbus.core.v2_0.services.access_control.NoLoginCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnknownBusCode;
-import tecgraf.openbus.core.v2_0.services.access_control.UnverifiedLoginCode;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.core.v2_0.services.offer_registry.ServiceProperty;
+import tecgraf.openbus.core.v2_1.services.ServiceFailure;
+import tecgraf.openbus.core.v2_1.services.access_control.InvalidRemoteCode;
+import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnknownBusCode;
+import tecgraf.openbus.core.v2_1.services.access_control.UnverifiedLoginCode;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
+import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Utils;
 
 /**
@@ -63,15 +63,21 @@ public final class Client {
     if (args.length > 3) {
       password = args[3];
     }
+    // - dominio (opcional)
+    String domain = "openbus";
+    if (args.length > 4) {
+      domain = args[4];
+    }
     // - arquivo (opcional)
     String file = "sharedauth.dat";
-    if (args.length > 4) {
-      file = args[4];
+    if (args.length > 5) {
+      file = args[5];
     }
 
     // recuperando o assistente
     final Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password.getBytes());
+      Assistant.createWithPassword(host, port, entity, password.getBytes(),
+        domain);
 
     // iniciando compartilhamento de autenticação
     SharedAuthSecret secret;
