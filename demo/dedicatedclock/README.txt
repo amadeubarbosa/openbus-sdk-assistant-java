@@ -18,10 +18,10 @@ ant-1.8.2.jar
 ant-launcher-1.8.2.jar
 jacorb-3.5.jar
 jacorb-omgapi-3.5.jar
-openbus-sdk-core-2.0.2.0.jar
-openbus-sdk-demo-util-2.0.2.0.jar
-openbus-sdk-legacy-2.0.2.0.jar
-openbus-sdk-assistant-core-2.0.1.0.jar
+openbus-sdk-core-2.1.0.0.jar
+openbus-sdk-demo-util-2.1.0.0.jar
+openbus-sdk-legacy-2.1.0.0.jar
+openbus-sdk-assistant-core-2.1.0.0.jar
 scs-core-1.2.1.3.jar
 slf4j-api-1.7.6.jar
 slf4j-jdk14-1.7.6.jar
@@ -43,9 +43,10 @@ Cliente
 2) porta do barramento
 3) nome de entidade
 4) senha (opcional - se não for fornecida, será usado o nome de entidade)
-5) tempo de espera entre cada tentativa de acesso ao barramento (em milisegundos 
+5) domínio (opcional - se não for fornecida, será usado o valor 'openbus')
+6) tempo de espera entre cada tentativa de acesso ao barramento (em milisegundos 
 e opcional - se não for fornecido, será 1)
-6) número máximo de tentativas de acesso ao barramento (opcional - se não for 
+7) número máximo de tentativas de acesso ao barramento (opcional - se não for 
 fornecido, será 10)
 
 
@@ -66,6 +67,6 @@ A demo deve ser executada na seguinte ordem:
 -------------------------------
 Supondo que os jars que o demo depende estão em um diretório chamado 'lib':
 
-1) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-dedicatedclock-2.0.1.0.jar demo.DedicatedClockServer localhost 2089 demo_dedicatedclock_java DemoDedicatedClock.key
+1) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-dedicatedclock-2.1.0.0.jar demo.DedicatedClockServer localhost 2089 demo_dedicatedclock_java DemoDedicatedClock.key
 
-2) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-dedicatedclock-2.0.1.0.jar demo.DedicatedClockClient localhost 2089 demo_dedicatedclock_java_client minhasenha
+2) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-dedicatedclock-2.1.0.0.jar demo.DedicatedClockClient localhost 2089 demo_dedicatedclock_java_client minhasenha
