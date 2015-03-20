@@ -171,6 +171,12 @@
 
       <dependency>
         <groupId>br.puc-rio.tecgraf.openbus</groupId>
+        <artifactId>openbus-sdk-utils</artifactId>
+        <version>${sdk.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>br.puc-rio.tecgraf.openbus</groupId>
         <artifactId>openbus-sdk-demo-util</artifactId>
         <version>${sdk.version}</version>
       </dependency>

@@ -28,6 +28,12 @@
     </dependency>
     
     <dependency>
+      <groupId>br.puc-rio.tecgraf.openbus</groupId>
+      <artifactId>openbus-sdk-utils</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
