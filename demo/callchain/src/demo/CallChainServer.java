@@ -14,7 +14,7 @@ import scs.core.exception.SCSException;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.assistant.Assistant;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
-import tecgraf.openbus.demo.util.Utils;
+import tecgraf.openbus.demo.util.Usage;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
 import tecgraf.openbus.security.Cryptography;
 
@@ -32,7 +32,7 @@ public class CallChainServer {
       String desc =
         "\n  - [interval] = Tempo de espera entre tentativas de acesso ao barramento."
           + " Valor padrão é '1'";
-      System.out.println(String.format(Utils.serverUsage, params, desc));
+      System.out.println(String.format(Usage.serverUsage, params, desc));
       System.exit(1);
       return;
     }
@@ -43,7 +43,7 @@ public class CallChainServer {
       port = Integer.parseInt(args[1]);
     }
     catch (NumberFormatException e) {
-      System.out.println(Utils.port);
+      System.out.println(Usage.port);
       System.exit(1);
       return;
     }
@@ -55,7 +55,7 @@ public class CallChainServer {
       privateKey = Cryptography.getInstance().readKeyFromFile(privateKeyFile);
     }
     catch (Exception e) {
-      System.out.println(Utils.keypath);
+      System.out.println(Usage.keypath);
       e.printStackTrace();
       System.exit(1);
       return;

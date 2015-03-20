@@ -5,16 +5,18 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAHelper;
 import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 
 import scs.core.ComponentContext;
+import scs.core.ComponentId;
 import scs.core.IComponent;
 import scs.core.exception.SCSException;
 import tecgraf.openbus.Connection;
@@ -27,7 +29,8 @@ import tecgraf.openbus.core.v2_1.services.access_control.MissingCertificate;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.security.Cryptography;
-import tecgraf.openbus.util.Utils;
+import tecgraf.openbus.utils.Configs;
+import tecgraf.openbus.utils.Utils;
 
 public class AssistantTest {
 
@@ -36,29 +39,25 @@ public class AssistantTest {
   private static String entity;
   private static byte[] password;
   private static String domain;
-  private static String server;
-  private static String privateKeyFile;
-  private static RSAPrivateKey privateKey;
-  private static String entityWithoutCert;
-  private static String wrongKeyFile;
-  private static RSAPrivateKey wrongKey;
+  private static String system;
+  private static RSAPrivateKey systemKey;
+  private static String systemWrongName;
+  private static RSAPrivateKey systemWrongKey;
 
   @BeforeClass
   public static void oneTimeSetUp() throws Exception {
     Cryptography crypto = Cryptography.getInstance();
-    Properties properties = Utils.readPropertyFile("/test.properties");
-    host = properties.getProperty("openbus.host.name");
-    port = Integer.valueOf(properties.getProperty("openbus.host.port"));
-    entity = properties.getProperty("entity.name");
-    password = properties.getProperty("entity.password").getBytes();
-    domain = properties.getProperty("user.password.domain", "testing");
-    server = properties.getProperty("server.entity.name");
-    privateKeyFile = properties.getProperty("server.private.key");
-    privateKey = crypto.readKeyFromFile(privateKeyFile);
-    entityWithoutCert = properties.getProperty("entity.withoutcert");
-    wrongKeyFile = properties.getProperty("wrongkey");
-    wrongKey = crypto.readKeyFromFile(wrongKeyFile);
-    Utils.setLogLevel(Level.FINE);
+    Configs configs = Configs.readConfigsFile();
+    Utils.setLibLogLevel(configs.log);
+    host = configs.bushost;
+    port = configs.busport;
+    entity = configs.user;
+    password = configs.password;
+    domain = configs.domain;
+    system = configs.system;
+    systemKey = crypto.readKeyFromFile(configs.syskey);
+    systemWrongName = configs.wrongsystem;
+    systemWrongKey = crypto.readKeyFromFile(configs.wrongkey);
   }
 
   @Test
@@ -120,7 +119,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPrivateKeyTest() {
     boolean failed = false;
     try {
-      Assistant.createWithPrivateKey(host, port, null, privateKey);
+      Assistant.createWithPrivateKey(host, port, null, systemKey);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -198,11 +197,11 @@ public class AssistantTest {
     Assert.assertEquals(args.entity, entity);
     Assert.assertTrue(Arrays.equals(args.password, password));
     assist.shutdown();
-    assist = Assistant.createWithPrivateKey(host, port, server, privateKey);
+    assist = Assistant.createWithPrivateKey(host, port, system, systemKey);
     Assert.assertNotSame(assist.orb(), orb);
     args = assist.onLoginAuthentication();
-    Assert.assertEquals(args.entity, server);
-    Assert.assertSame(args.privkey, privateKey);
+    Assert.assertEquals(args.entity, system);
+    Assert.assertSame(args.privkey, systemKey);
     assist.shutdown();
   }
 
@@ -217,7 +216,7 @@ public class AssistantTest {
     Assert.assertSame(params.orb, orb);
     boolean failed = false;
     try {
-      Assistant.createWithPrivateKey(host, port, entity, privateKey, params);
+      Assistant.createWithPrivateKey(host, port, entity, systemKey, params);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -324,11 +323,11 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = 1.0f;
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, server, privateKey, params);
+      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
     ORB orb = assist.orb();
     int index;
     for (index = 0; index < 5; index++) {
-      ComponentContext context = Utils.buildComponent(orb);
+      ComponentContext context = buildComponent(orb);
       ServiceProperty[] props =
         new ServiceProperty[] {
             new ServiceProperty("offer.domain", "Assistant Test"),
@@ -342,7 +341,7 @@ public class AssistantTest {
     ServiceOfferDesc[] found = assist.findServices(search, 3);
     Assert.assertEquals(index, found.length);
     assist.shutdown();
-    assist = Assistant.createWithPrivateKey(host, port, server, privateKey);
+    assist = Assistant.createWithPrivateKey(host, port, system, systemKey);
     found = assist.findServices(search, 3);
     Assert.assertEquals(0, found.length);
     assist.shutdown();
@@ -353,11 +352,11 @@ public class AssistantTest {
     AssistantParams params = new AssistantParams();
     params.interval = 1.0f;
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, server, privateKey, params);
+      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
     ORB orb = assist.orb();
     int index;
     for (index = 0; index < 5; index++) {
-      ComponentContext context = Utils.buildComponent(orb);
+      ComponentContext context = buildComponent(orb);
       ServiceProperty[] props =
         new ServiceProperty[] {
             new ServiceProperty("offer.domain", "Assistant Test"),
@@ -400,9 +399,9 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, server, privateKey, params);
+      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
     ORB orb = assist.orb();
-    ComponentContext context = Utils.buildComponent(orb);
+    ComponentContext context = buildComponent(orb);
     context.removeFacet("IMetaInterface");
     ServiceProperty[] props =
       new ServiceProperty[] { new ServiceProperty("offer.domain",
@@ -445,9 +444,9 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, server, privateKey, params);
+      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
     ORB orb = assist.orb();
-    ComponentContext context = Utils.buildComponent(orb);
+    ComponentContext context = buildComponent(orb);
     context.removeFacet("IMetaInterface");
     ServiceProperty[] props =
       new ServiceProperty[] { new ServiceProperty("offer.domain",
@@ -456,7 +455,7 @@ public class AssistantTest {
     Thread.sleep((int) (params.interval * 3 * 1000));
     Assert.assertTrue(failed.get());
 
-    ComponentContext context2 = Utils.buildComponent(orb);
+    ComponentContext context2 = buildComponent(orb);
     try {
       assist.registerService(context2.getIComponent(), props);
     }
@@ -689,7 +688,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPrivateKey(host, port, server, wrongKey, params);
+    Assistant.createWithPrivateKey(host, port, system, systemWrongKey, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -734,7 +733,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPrivateKey(host, port, entityWithoutCert, privateKey,
+    Assistant.createWithPrivateKey(host, port, systemWrongName, systemKey,
       params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
@@ -892,7 +891,8 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPrivateKey(host, port, server, wrongKey, params);
+      Assistant
+        .createWithPrivateKey(host, port, system, systemWrongKey, params);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -902,7 +902,7 @@ public class AssistantTest {
     Assert.assertTrue(failed.get());
     Assert.assertTrue(asExpected.get());
 
-    ComponentContext context = Utils.buildComponent(assistant.orb());
+    ComponentContext context = buildComponent(assistant.orb());
     ServiceProperty[] props =
       new ServiceProperty[] { new ServiceProperty("offer.domain",
         "Assistant Test") };
@@ -914,5 +914,23 @@ public class AssistantTest {
       registerFailed = true;
     }
     Assert.assertTrue(registerFailed);
+  }
+
+  /**
+   * Constrói um componente SCS
+   * 
+   * @param orb o orb em uso
+   * @return um componente
+   * @throws SCSException
+   * @throws AdapterInactive
+   * @throws InvalidName
+   */
+  private ComponentContext buildComponent(ORB orb) throws SCSException,
+    AdapterInactive, InvalidName {
+    POA poa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+    poa.the_POAManager().activate();
+    ComponentId id =
+      new ComponentId("TestComponent", (byte) 1, (byte) 0, (byte) 0, "java");
+    return new ComponentContext(orb, poa, id);
   }
 }

@@ -18,7 +18,7 @@ import tecgraf.openbus.core.v2_1.services.access_control.UnknownBusCode;
 import tecgraf.openbus.core.v2_1.services.access_control.UnverifiedLoginCode;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
-import tecgraf.openbus.demo.util.Utils;
+import tecgraf.openbus.demo.util.Usage;
 import tecgraf.openbus.exception.AlreadyLoggedIn;
 
 /**
@@ -53,7 +53,7 @@ public final class DedicatedClockClient {
           + " barramento em virtude de falhas. Valor padrão é '1'"
           + "\n  - [retries] = Número máximo de tentativas de acesso ao"
           + " barramento em virtude de falhas. Valor padrão é '10'";
-      System.out.println(String.format(Utils.clientUsage, params, desc));
+      System.out.println(String.format(Usage.clientUsage, params, desc));
       System.exit(1);
       return;
     }
@@ -64,7 +64,7 @@ public final class DedicatedClockClient {
       port = Integer.parseInt(args[1]);
     }
     catch (NumberFormatException e) {
-      System.out.println(Utils.port);
+      System.out.println(Usage.port);
       System.exit(1);
       return;
     }

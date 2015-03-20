@@ -12,7 +12,7 @@ import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
 import tecgraf.openbus.core.v2_1.services.access_control.UnknownBusCode;
 import tecgraf.openbus.core.v2_1.services.access_control.UnverifiedLoginCode;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceOfferDesc;
-import tecgraf.openbus.demo.util.Utils;
+import tecgraf.openbus.utils.LibUtils;
 
 public class ProxyMessengerImpl extends MessengerPOA {
 
@@ -28,7 +28,7 @@ public class ProxyMessengerImpl extends MessengerPOA {
   @Override
   public void showMessage(String message) throws Unavailable, Unauthorized {
     CallerChain chain = context.getCallerChain();
-    System.out.println(String.format("repassando mensagem de %s", Utils
+    System.out.println(String.format("repassando mensagem de %s", LibUtils
       .chain2str(chain)));
     context.joinChain(chain);
     for (ServiceOfferDesc offer : this.offers) {
