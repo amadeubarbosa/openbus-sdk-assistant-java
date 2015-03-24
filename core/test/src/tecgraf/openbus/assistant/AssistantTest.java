@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,17 +45,16 @@ public class AssistantTest {
   public static void oneTimeSetUp() throws Exception {
     Cryptography crypto = Cryptography.getInstance();
     Properties properties = Utils.readPropertyFile("/test.properties");
-    host = properties.getProperty("openbus.host.name");
-    port = Integer.valueOf(properties.getProperty("openbus.host.port"));
-    entity = properties.getProperty("entity.name");
-    password = properties.getProperty("entity.password").getBytes();
-    server = properties.getProperty("server.entity.name");
-    privateKeyFile = properties.getProperty("server.private.key");
+    host = properties.getProperty("bus.host.name");
+    port = Integer.valueOf(properties.getProperty("bus.host.port"));
+    entity = properties.getProperty("user.entity.name");
+    password = properties.getProperty("user.password").getBytes();
+    server = properties.getProperty("system.entity.name");
+    privateKeyFile = properties.getProperty("system.private.key");
     privateKey = crypto.readKeyFromFile(privateKeyFile);
-    entityWithoutCert = properties.getProperty("entity.withoutcert");
-    wrongKeyFile = properties.getProperty("wrongkey");
+    entityWithoutCert = properties.getProperty("system.wrong.name");
+    wrongKeyFile = properties.getProperty("system.wrong.key");
     wrongKey = crypto.readKeyFromFile(wrongKeyFile);
-    Utils.setLogLevel(Level.FINE);
   }
 
   @Test
