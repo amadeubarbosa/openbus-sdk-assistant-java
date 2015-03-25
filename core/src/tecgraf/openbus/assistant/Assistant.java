@@ -70,10 +70,6 @@ public abstract class Assistant {
 
   /** Intervalo de espera entre tentativas em milissegundos */
   private int mInterval = 5000;
-  /** Host com o qual o assistente quer se conectar */
-  private String host;
-  /** Porta com a qual o assistente quer se conectar */
-  private int port;
   /** ORB utilizado pelo assistente */
   private ORB orb;
   /** Contexto do ORB utilizado */
@@ -111,33 +107,12 @@ public abstract class Assistant {
    * {@link Assistant#onLoginAuthentication()} que informa a forma de
    * autenticação, assim como os dados para realizar essa autenticação.
    * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
-   */
-  public Assistant(String host, int port) {
-    this(host, port, null);
-  }
-
-  /**
-   * Cria um assistente que efetua login no barramento utilizando autenticação
-   * definida pelo método {@link Assistant#onLoginAuthentication()}.
-   * <p>
-   * Assistentes criados com essa operação realizam o login no barramento sempre
-   * utilizando autenticação definida pelo método
-   * {@link Assistant#onLoginAuthentication()} que informa a forma de
-   * autenticação, assim como os dados para realizar essa autenticação.
-   * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
    * @param params Parâmetros opicionais de configuração do assistente
    */
-  public Assistant(String host, int port, AssistantParams params) {
-    this.host = host;
-    this.port = port;
+  public Assistant(AssistantParams params) {
     if (params == null) {
-      params = new AssistantParams();
+      throw new IllegalArgumentException(
+        "Parâmetros do Assistente não pode ser nulo.");
     }
     orb = params.orb;
     if (orb == null) {
@@ -152,7 +127,7 @@ public abstract class Assistant {
         "ORB utilizado não foi inicializado corretamente.", e);
     }
     try {
-      this.conn = this.context.createConnection(host, port, params.connprops);
+      this.conn = createConnection(params);
     }
     catch (InvalidPropertyValue e) {
       throw new IllegalArgumentException(
@@ -182,25 +157,24 @@ public abstract class Assistant {
   }
 
   /**
-   * Cria um assistente que efetua login no barramento utilizando autenticação
-   * por senha.
+   * Método interno responsável por instaciar uma conexão.
    * <p>
-   * Assistentes criados com essa operação realizam o login no barramento sempre
-   * utilizando autenticação da entidade indicada pelo parâmetro 'entity' e a
-   * senha fornecida pelo parâmetro 'password'.
+   * Utilizando o {@link OpenBusContext} instancia uma conexão a ser utilizada
+   * por esta instância de assistente.
    * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
-   * @param entity Identificador da entidade a ser autenticada.
-   * @param password Senha de autenticação no barramento da entidade.
-   * @param domain Identificador do domínio de autenticação.
-   * 
-   * @return um novo assistente.
+   * @param params
+   * @return a conexão criada.
+   * @throws InvalidPropertyValue
    */
-  public static Assistant createWithPassword(String host, int port,
-    final String entity, final byte[] password, final String domain) {
-    return createWithPassword(host, port, entity, password, domain, null);
+  private Connection createConnection(AssistantParams params)
+    throws InvalidPropertyValue {
+    if (params.reference != null) {
+      return context.connectByReference(params.reference, params.connprops);
+    }
+    else {
+      return context.connectByAddress(params.host, params.port,
+        params.connprops);
+    }
   }
 
   /**
@@ -209,23 +183,21 @@ public abstract class Assistant {
    * <p>
    * Assistentes criados com essa operação realizam o login no barramento sempre
    * utilizando autenticação da entidade indicada pelo parâmetro 'entity' e a
-   * senha fornecida pelo parâmetro 'password'.
+   * senha fornecida pelo parâmetro 'password'. O barramento é indicado por um
+   * nome ou endereço de rede e um número de porta, onde os serviços núcleo
+   * daquele barramento estão executando.
    * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
+   * @param params Parâmetros de configuração do assistente
    * @param entity Identificador da entidade a ser autenticada.
    * @param password Senha de autenticação no barramento da entidade.
    * @param domain Identificador do domínio de autenticação.
-   * @param params Parâmetros opicionais de configuração do assistente
    * 
    * @return um novo assistente.
    */
-  public static Assistant createWithPassword(String host, int port,
-    final String entity, final byte[] password, final String domain,
-    AssistantParams params) {
+  public static Assistant createWithPassword(AssistantParams params,
+    String entity, byte[] password, String domain) {
     final AuthArgs authArgs = new AuthArgs(entity, password, domain);
-    return new Assistant(host, port, params) {
+    return new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -240,44 +212,22 @@ public abstract class Assistant {
    * <p>
    * Assistentes criados com essa operação realizam o login no barramento sempre
    * utilizando autenticação da entidade indicada pelo parâmetro 'entity' e a
-   * chave privada fornecida pelo parâmetro 'key'.
+   * chave privada fornecida pelo parâmetro 'key'. O barramento é indicado por
+   * um nome ou endereço de rede e um número de porta, onde os serviços núcleo
+   * daquele barramento estão executando.
    * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
+   * @param params Parâmetros de configuração do assistente.
    * @param entity Identificador da entidade a ser autenticada.
    * @param key Chave privada correspondente ao certificado registrado a ser
    *        utilizada na autenticação.
    * 
-   * @return um novo assistente.
-   */
-  public static Assistant createWithPrivateKey(String host, int port,
-    final String entity, final RSAPrivateKey key) {
-    return createWithPrivateKey(host, port, entity, key, null);
-  }
-
-  /**
-   * Cria um assistente que efetua login no barramento utilizando autenticação
-   * por certificado.
-   * <p>
-   * Assistentes criados com essa operação realizam o login no barramento sempre
-   * utilizando autenticação da entidade indicada pelo parâmetro 'entity' e a
-   * chave privada fornecida pelo parâmetro 'key'.
-   * 
-   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
-   *        estão executando.
-   * @param port Porta onde os serviços núcleo do barramento estão executando.
-   * @param entity Identificador da entidade a ser autenticada.
-   * @param key Chave privada correspondente ao certificado registrado a ser
-   *        utilizada na autenticação.
-   * @param params Parâmetros opicionais de configuração do assistente
    * 
    * @return um novo assistente.
    */
-  public static Assistant createWithPrivateKey(String host, int port,
-    final String entity, final RSAPrivateKey key, AssistantParams params) {
+  public static Assistant createWithPrivateKey(AssistantParams params,
+    String entity, RSAPrivateKey key) {
     final AuthArgs authArgs = new AuthArgs(entity, key);
-    return new Assistant(host, port, params) {
+    return new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -429,7 +379,6 @@ public abstract class Assistant {
    * exceção será lançada. Caso uma exceção não tenha sido recebida, será
    * retornado NULL.
    *
-   * @param secret Segredo a ser fornecido na conclusão do processo de login.
    * @param retries Parâmetro opcional indicando o número de novas tentativas de
    *        busca de ofertas em caso de falhas, como o barramento estar
    *        indisponível ou não for possível estabelecer um login até o momento.
@@ -528,12 +477,11 @@ public abstract class Assistant {
     }
     // bus core
     catch (ServiceFailure e) {
-      logger.log(Level.SEVERE, String.format(
-        "falha severa no barramento em %s:%s : %s", host, port, e.message), e);
+      logger.log(Level.SEVERE, String.format("falha severa no barramento: %s",
+        e.message), e);
     }
     catch (TRANSIENT e) {
-      logger.log(Level.WARNING, String.format(
-        "o barramento em %s:%s esta inacessível no momento", host, port), e);
+      logger.log(Level.WARNING, "o barrament esta inacessível no momento", e);
     }
     catch (COMM_FAILURE e) {
       logger.log(Level.WARNING,
@@ -614,8 +562,7 @@ public abstract class Assistant {
     }
     catch (TRANSIENT e) {
       ex = e;
-      logger.log(Level.WARNING, String.format(
-        "o barramento em %s:%s esta inacessível no momento", host, port), e);
+      logger.log(Level.WARNING, "o barramento esta inacessível no momento", e);
     }
     catch (COMM_FAILURE e) {
       ex = e;
@@ -675,8 +622,7 @@ public abstract class Assistant {
     }
     catch (TRANSIENT e) {
       ex = e;
-      logger.log(Level.WARNING, String.format(
-        "o barramento em %s:%s esta inacessível no momento", host, port), e);
+      logger.log(Level.WARNING, "o barramento esta inacessível no momento", e);
     }
     catch (COMM_FAILURE e) {
       ex = e;
@@ -735,8 +681,7 @@ public abstract class Assistant {
     }
     catch (TRANSIENT e) {
       ex = e;
-      logger.log(Level.WARNING, String.format(
-        "o barramento em %s:%s esta inacessível no momento", host, port), e);
+      logger.log(Level.WARNING, "o barramento esta inacessível no momento", e);
     }
     catch (COMM_FAILURE e) {
       ex = e;
@@ -775,7 +720,6 @@ public abstract class Assistant {
    * Método responsável por iniciar o processo de compartilhamento de
    * autenticação.
    * 
-   * @param secret segredo a ser fornecido na conclusão do porcesso de login.
    * @return Objeto que representa o processo de login iniciado, ou
    *         <code>null</code> caso algum erro tenha ocorrido.
    * @throws Exception
@@ -796,8 +740,7 @@ public abstract class Assistant {
     }
     catch (TRANSIENT e) {
       ex = e;
-      logger.log(Level.WARNING, String.format(
-        "o barramento em %s:%s esta inacessível no momento", host, port), e);
+      logger.log(Level.WARNING, "o barramento esta inacessível no momento", e);
     }
     catch (COMM_FAILURE e) {
       ex = e;
@@ -944,9 +887,8 @@ public abstract class Assistant {
       }
       catch (TRANSIENT e) {
         ex = e;
-        logger.log(Level.WARNING, String.format(
-          "o barramento em %s:%s esta inacessível no momento", assist.host,
-          assist.port), e);
+        logger
+          .log(Level.WARNING, "o barramento esta inacessível no momento", e);
       }
       catch (COMM_FAILURE e) {
         ex = e;

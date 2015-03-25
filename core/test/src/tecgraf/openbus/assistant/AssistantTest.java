@@ -43,6 +43,7 @@ public class AssistantTest {
   private static RSAPrivateKey systemKey;
   private static String systemWrongName;
   private static RSAPrivateKey systemWrongKey;
+  private static AssistantParams paramsHostPort;
 
   @BeforeClass
   public static void oneTimeSetUp() throws Exception {
@@ -51,6 +52,7 @@ public class AssistantTest {
     Utils.setLibLogLevel(configs.log);
     host = configs.bushost;
     port = configs.busport;
+    paramsHostPort = new AssistantParams(host, port);
     entity = configs.user;
     password = configs.password;
     domain = configs.domain;
@@ -63,9 +65,10 @@ public class AssistantTest {
   @Test
   public void invalidHostTest() {
     String invHost = "unknown-host";
+    AssistantParams params = new AssistantParams(invHost, port);
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(invHost, port, entity, password, domain);
+      Assistant.createWithPassword(params, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
@@ -77,9 +80,10 @@ public class AssistantTest {
   public void invalidHostPortTest() {
     // chutando uma porta inválida
     int invPort = port + 111;
+    AssistantParams params = new AssistantParams(host, invPort);
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(host, invPort, entity, password, domain);
+      Assistant.createWithPassword(params, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
@@ -91,7 +95,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPasswordTest() {
     boolean failed = false;
     try {
-      Assistant.createWithPassword(host, port, null, password, domain);
+      Assistant.createWithPassword(paramsHostPort, null, password, domain);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -99,7 +103,7 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-      Assistant.createWithPassword(host, port, entity, null, domain);
+      Assistant.createWithPassword(paramsHostPort, entity, null, domain);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -107,7 +111,7 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-      Assistant.createWithPassword(host, port, entity, password, null);
+      Assistant.createWithPassword(paramsHostPort, entity, password, null);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -119,7 +123,7 @@ public class AssistantTest {
   public void nullArgsToCreateWithPrivateKeyTest() {
     boolean failed = false;
     try {
-      Assistant.createWithPrivateKey(host, port, null, systemKey);
+      Assistant.createWithPrivateKey(paramsHostPort, null, systemKey);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -127,7 +131,7 @@ public class AssistantTest {
     Assert.assertTrue(failed);
     failed = false;
     try {
-      Assistant.createWithPrivateKey(host, port, entity, null);
+      Assistant.createWithPrivateKey(paramsHostPort, entity, null);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -139,7 +143,7 @@ public class AssistantTest {
   public void nullArgsToCreateBySharedAuthTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -169,7 +173,7 @@ public class AssistantTest {
       }
     };
 
-    new Assistant(host, port, params) {
+    new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -191,13 +195,13 @@ public class AssistantTest {
   public void createTest() {
     ORB orb = ORBInitializer.initORB();
     Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password, domain);
+      Assistant.createWithPassword(paramsHostPort, entity, password, domain);
     Assert.assertNotSame(assist.orb(), orb);
     AuthArgs args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, entity);
     Assert.assertTrue(Arrays.equals(args.password, password));
     assist.shutdown();
-    assist = Assistant.createWithPrivateKey(host, port, system, systemKey);
+    assist = Assistant.createWithPrivateKey(paramsHostPort, system, systemKey);
     Assert.assertNotSame(assist.orb(), orb);
     args = assist.onLoginAuthentication();
     Assert.assertEquals(args.entity, system);
@@ -208,15 +212,14 @@ public class AssistantTest {
   @Test
   public void reuseORBTest() {
     ORB orb = ORBInitializer.initORB();
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.orb = orb;
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     Assert.assertSame(params.orb, orb);
     boolean failed = false;
     try {
-      Assistant.createWithPrivateKey(host, port, entity, systemKey, params);
+      Assistant.createWithPrivateKey(params, entity, systemKey);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -228,16 +231,15 @@ public class AssistantTest {
   @Test
   public void reuseORBbyContextTest() throws Exception {
     ORB orb = ORBInitializer.initORB();
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.orb = orb;
     OpenBusContext context =
       (OpenBusContext) orb.resolve_initial_references("OpenBusContext");
-    Connection conn = context.createConnection(host, port);
+    Connection conn = context.connectByAddress(host, port);
     context.setDefaultConnection(conn);
     boolean failed = false;
     try {
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -253,48 +255,44 @@ public class AssistantTest {
     props.setProperty("org.omg.CORBA.ORBClass", "org.jacorb.orb.ORB");
     props.setProperty("org.omg.CORBA.ORBSingletonClass",
       "org.jacorb.orb.ORBSingleton");
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.orb = ORB.init(args, props);
-    Assistant.createWithPassword(host, port, entity, password, domain, params);
+    Assistant.createWithPassword(params, entity, password, domain);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void intervalIsNaNTest() throws IllegalArgumentException {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = Float.NaN;
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     assist.shutdown();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void intervalIsPositiveInfinityTest() throws IllegalArgumentException {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = Float.POSITIVE_INFINITY;
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     assist.shutdown();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void intervalIsNegativeInfinityTest() throws IllegalArgumentException {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = Float.NEGATIVE_INFINITY;
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     assist.shutdown();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void intervalIsLowerTest() throws IllegalArgumentException {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 0.0f;
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     assist.shutdown();
   }
 
@@ -302,12 +300,10 @@ public class AssistantTest {
   public void intervalIsValidTest() {
     boolean failed = false;
     Assistant assist = null;
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     try {
-      assist =
-        Assistant.createWithPassword(host, port, entity, password, domain,
-          params);
+      assist = Assistant.createWithPassword(params, entity, password, domain);
     }
     catch (IllegalArgumentException e) {
       failed = true;
@@ -320,10 +316,10 @@ public class AssistantTest {
 
   @Test
   public void registerAndFindTest() throws Throwable {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
+      Assistant.createWithPrivateKey(params, system, systemKey);
     ORB orb = assist.orb();
     int index;
     for (index = 0; index < 5; index++) {
@@ -341,7 +337,7 @@ public class AssistantTest {
     ServiceOfferDesc[] found = assist.findServices(search, 3);
     Assert.assertEquals(index, found.length);
     assist.shutdown();
-    assist = Assistant.createWithPrivateKey(host, port, system, systemKey);
+    assist = Assistant.createWithPrivateKey(paramsHostPort, system, systemKey);
     found = assist.findServices(search, 3);
     Assert.assertEquals(0, found.length);
     assist.shutdown();
@@ -349,10 +345,10 @@ public class AssistantTest {
 
   @Test
   public void registerAndGetAllTest() throws Throwable {
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
+      Assistant.createWithPrivateKey(params, system, systemKey);
     ORB orb = assist.orb();
     int index;
     for (index = 0; index < 5; index++) {
@@ -373,7 +369,7 @@ public class AssistantTest {
   public void invalidRegisterTest() throws AdapterInactive, InvalidName,
     SCSException, InterruptedException {
     final AtomicBoolean failed = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -399,7 +395,7 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
+      Assistant.createWithPrivateKey(params, system, systemKey);
     ORB orb = assist.orb();
     ComponentContext context = buildComponent(orb);
     context.removeFacet("IMetaInterface");
@@ -417,7 +413,7 @@ public class AssistantTest {
     throws AdapterInactive, InvalidName, SCSException, InterruptedException {
     final AtomicBoolean failed = new AtomicBoolean(false);
     boolean newRegisterFailed = false;
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -444,7 +440,7 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant.createWithPrivateKey(host, port, system, systemKey, params);
+      Assistant.createWithPrivateKey(params, system, systemKey);
     ORB orb = assist.orb();
     ComponentContext context = buildComponent(orb);
     context.removeFacet("IMetaInterface");
@@ -469,7 +465,7 @@ public class AssistantTest {
   @Test
   public void loginBySharedAuthTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -494,7 +490,7 @@ public class AssistantTest {
         // do nothing
       }
     };
-    Assistant assist = new Assistant(host, port, params) {
+    Assistant assist = new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -524,7 +520,7 @@ public class AssistantTest {
   @Test
   public void startSharedAuthTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -550,8 +546,7 @@ public class AssistantTest {
       }
     };
     Assistant assist =
-      Assistant
-        .createWithPassword(host, port, entity, password, domain, params);
+      Assistant.createWithPassword(params, entity, password, domain);
     SharedAuthSecret secret = assist.startSharedAuth(1);
     Assert.assertFalse(failed.get());
     Assert.assertNotNull(secret);
@@ -560,7 +555,7 @@ public class AssistantTest {
     OpenBusContext context =
       (OpenBusContext) assist.orb()
         .resolve_initial_references("OpenBusContext");
-    Connection conn = context.createConnection(host, port);
+    Connection conn = context.connectByAddress(host, port);
     conn.loginBySharedAuth(secret);
     LoginInfo loginInfo = conn.login();
     Assert.assertEquals(entity, loginInfo.entity);
@@ -571,7 +566,7 @@ public class AssistantTest {
   @Test
   public void nullLoginArgsTest() throws InterruptedException {
     final AtomicBoolean failed = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -596,7 +591,7 @@ public class AssistantTest {
         // do nothing
       }
     };
-    Assistant assist = new Assistant(host, port, params) {
+    Assistant assist = new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {
@@ -612,7 +607,7 @@ public class AssistantTest {
   public void invalidPasswordTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -642,8 +637,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPassword(host, port, "invalid-1", new byte[] {},
-      domain, params);
+    Assistant.createWithPassword(params, "invalid-1", new byte[] {}, domain);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -658,7 +652,7 @@ public class AssistantTest {
   public void invalidPrivateKeyTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -688,7 +682,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPrivateKey(host, port, system, systemWrongKey, params);
+    Assistant.createWithPrivateKey(params, system, systemWrongKey);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -703,7 +697,7 @@ public class AssistantTest {
   public void invalidLoginMissingCertificateTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -733,8 +727,7 @@ public class AssistantTest {
       }
     };
 
-    Assistant.createWithPrivateKey(host, port, systemWrongName, systemKey,
-      params);
+    Assistant.createWithPrivateKey(params, systemWrongName, systemKey);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -749,7 +742,7 @@ public class AssistantTest {
   public void findWithInvalidLoginByPasswordTest() throws Throwable {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean findCalled = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -777,8 +770,7 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, "invalid-2", new byte[] {},
-        domain, params);
+      Assistant.createWithPassword(params, "invalid-2", new byte[] {}, domain);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -801,7 +793,7 @@ public class AssistantTest {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
     final AtomicBoolean findCalled = new AtomicBoolean(false);
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -833,8 +825,7 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant.createWithPassword(host, port, "invalid-3", new byte[] {},
-        domain, params);
+      Assistant.createWithPassword(params, "invalid-3", new byte[] {}, domain);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }
@@ -856,7 +847,7 @@ public class AssistantTest {
     final AtomicBoolean failed = new AtomicBoolean(false);
     final AtomicBoolean asExpected = new AtomicBoolean(false);
     boolean registerFailed = false;
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = 1.0f;
     params.callback = new OnFailureCallback() {
 
@@ -891,8 +882,7 @@ public class AssistantTest {
     };
 
     Assistant assistant =
-      Assistant
-        .createWithPrivateKey(host, port, system, systemWrongKey, params);
+      Assistant.createWithPrivateKey(params, system, systemWrongKey);
     try {
       Thread.sleep((int) (params.interval * 3 * 1000));
     }

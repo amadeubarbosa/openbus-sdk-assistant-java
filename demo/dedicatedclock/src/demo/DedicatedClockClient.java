@@ -104,11 +104,10 @@ public final class DedicatedClockClient {
     }
 
     /// recuperando o assistente
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = interval;
     final Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password.getBytes(),
-        domain, params);
+      Assistant.createWithPassword(params, entity, password.getBytes(), domain);
 
     Long timestamp = null;
     // busca por serviço

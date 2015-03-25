@@ -13,6 +13,7 @@ import scs.core.ComponentId;
 import scs.core.exception.SCSException;
 import tecgraf.openbus.OpenBusContext;
 import tecgraf.openbus.assistant.Assistant;
+import tecgraf.openbus.assistant.AssistantParams;
 import tecgraf.openbus.core.v2_1.services.ServiceFailure;
 import tecgraf.openbus.core.v2_1.services.offer_registry.ServiceProperty;
 import tecgraf.openbus.demo.util.Usage;
@@ -78,7 +79,8 @@ public final class GreetingsServer {
 
     // recuperando o assistente
     final Assistant assist =
-      Assistant.createWithPrivateKey(host, port, entity, privateKey);
+      Assistant.createWithPrivateKey(new AssistantParams(host, port), entity,
+        privateKey);
     final ORB orb = assist.orb();
     // - disparando a thread para que o ORB atenda requisições
     Thread run = new Thread() {

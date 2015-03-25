@@ -96,11 +96,10 @@ public final class IndependentClockClient {
     }
 
     // recuperando o assistente
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = interval;
     final Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password.getBytes(),
-        domain, params);
+      Assistant.createWithPassword(params, entity, password.getBytes(), domain);
 
     activateSearch(assist);
 

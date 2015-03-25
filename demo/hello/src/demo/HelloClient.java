@@ -6,6 +6,7 @@ import org.omg.CORBA.TRANSIENT;
 import org.omg.CORBA.ORBPackage.InvalidName;
 
 import tecgraf.openbus.assistant.Assistant;
+import tecgraf.openbus.assistant.AssistantParams;
 import tecgraf.openbus.core.v2_1.services.ServiceFailure;
 import tecgraf.openbus.core.v2_1.services.access_control.InvalidRemoteCode;
 import tecgraf.openbus.core.v2_1.services.access_control.NoLoginCode;
@@ -65,8 +66,8 @@ public final class HelloClient {
 
     // recuperando o assistente
     final Assistant assist =
-      Assistant.createWithPassword(host, port, entity, password.getBytes(),
-        domain);
+      Assistant.createWithPassword(new AssistantParams(host, port), entity,
+        password.getBytes(), domain);
 
     // busca por serviço
     ServiceProperty[] properties = new ServiceProperty[1];

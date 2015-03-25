@@ -3,11 +3,11 @@ package tecgraf.openbus.assistant;
 import java.util.Properties;
 
 import org.omg.CORBA.ORB;
+import org.omg.CORBA.Object;
 
 /**
- * 
- * Representa um conjunto de parâmetros opcionais que podem ser utilizados para
- * definir parâmetros de configuração na construção do Assistente.
+ * Representa um conjunto de parâmetros que são utilizados para definir
+ * parâmetros de configuração na construção do Assistente.
  * <p>
  * Os parâmetros opicionais são descritos abaixo:
  * <ul>
@@ -31,6 +31,16 @@ import org.omg.CORBA.ORB;
  * @author Tecgraf
  */
 public class AssistantParams {
+
+  /** Host com o qual o assistente quer se conectar */
+  protected String host;
+  /** Porta com a qual o assistente quer se conectar */
+  protected int port;
+  /**
+   * Referência para componentes SCS que representa os serviços núcleo do
+   * barramento
+   */
+  protected Object reference;
   /**
    * Tempo em segundos indicando o tempo mínimo de espera antes de cada nova
    * tentativa após uma falha na execução de uma tarefa. Por exemplo, depois de
@@ -58,4 +68,29 @@ public class AssistantParams {
    * pelo assistente.
    */
   public OnFailureCallback callback;
+
+  /**
+   * Parâmetros de configuração de assistente que realizará a conexão a um
+   * barramento utilizando host e porta.
+   * 
+   * @param host Endereço ou nome de rede onde os serviços núcleo do barramento
+   *        estão executando.
+   * @param port Porta onde os serviços núcleo do barramento estão executando.
+   */
+  public AssistantParams(String host, int port) {
+    this.host = host;
+    this.port = port;
+  }
+
+  /**
+   * Parâmetros de configuração de assistente que realizará a conexão a um
+   * barramento utilizando uma referência CORBA a um componente SCS que
+   * representa os serviços núcleo do barramento.
+   * 
+   * @param reference Referência CORBA a um componente SCS que representa os
+   *        serviços núcleo do barramento.
+   */
+  public AssistantParams(Object reference) {
+    this.reference = reference;
+  }
 }

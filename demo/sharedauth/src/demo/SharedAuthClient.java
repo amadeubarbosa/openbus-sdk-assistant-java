@@ -69,7 +69,7 @@ public class SharedAuthClient {
       path = "sharedauth.dat";
     }
 
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.callback = new OnFailureCallback() {
 
       @Override
@@ -96,7 +96,7 @@ public class SharedAuthClient {
       }
     };
     // criando o assistente.
-    Assistant assist = new Assistant(host, port, params) {
+    Assistant assist = new Assistant(params) {
 
       @Override
       public AuthArgs onLoginAuthentication() {

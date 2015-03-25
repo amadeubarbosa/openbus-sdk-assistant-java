@@ -90,10 +90,10 @@ public final class DedicatedClockServer {
     }
 
     // recuperando o assistente
-    AssistantParams params = new AssistantParams();
+    AssistantParams params = new AssistantParams(host, port);
     params.interval = interval;
     final Assistant assist =
-      Assistant.createWithPrivateKey(host, port, entity, privateKey, params);
+      Assistant.createWithPrivateKey(params, entity, privateKey);
     final ORB orb = assist.orb();
     // - disparando a thread para que o ORB atenda requisições
     Thread run = new Thread() {
