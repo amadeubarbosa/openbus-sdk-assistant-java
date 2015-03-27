@@ -21,8 +21,8 @@ As dependências de software são fornecidas já compiladas, em conjunto com a demo
 
 ant-1.8.2.jar
 ant-launcher-1.8.2.jar
-jacorb-3.6.jar
-jacorb-omgapi-3.6.jar
+jacorb-3.5.jar
+jacorb-omgapi-3.5.jar
 openbus-sdk-core-2.1.0.0.jar
 openbus-sdk-demo-util-2.1.0.0.jar
 openbus-sdk-legacy-2.1.0.0.jar
