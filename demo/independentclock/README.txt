@@ -23,10 +23,10 @@ ant-1.8.2.jar
 ant-launcher-1.8.2.jar
 jacorb-3.5.jar
 jacorb-omgapi-3.5.jar
-openbus-sdk-core-2.1.0.0.jar
-openbus-sdk-demo-util-2.1.0.0.jar
-openbus-sdk-legacy-2.1.0.0.jar
-openbus-sdk-assistant-core-2.1.0.0.jar
+openbus-sdk-core-2.1.0.0-RC1.jar
+openbus-sdk-demo-util-2.1.0.0-RC1.jar
+openbus-sdk-legacy-2.1.0.0-RC1.jar
+openbus-sdk-assistant-core-2.1.0.0-RC1.jar
 scs-core-1.2.1.3.jar
 slf4j-api-1.7.6.jar
 slf4j-jdk14-1.7.6.jar
@@ -73,6 +73,6 @@ A demo deve ser executada na seguinte ordem:
 -------------------------------
 Supondo que os jars que o demo depende estão em um diretório chamado 'lib':
 
-1) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-independentclock-2.1.0.0.jar demo.IndependentClockServer localhost 2089 demo_independentclock_java DemoIndependentClock.key
+1) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-independentclock-2.1.0.0-RC1.jar demo.IndependentClockServer localhost 2089 demo_independentclock_java DemoIndependentClock.key
 
-2) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-independentclock-2.1.0.0.jar demo.IndependentClockClient localhost 2089 demo_independentclock_java_client minhasenha
+2) java -Djava.endorsed.dirs=./lib/ -cp $(echo lib/*.jar | tr ' ' ':'):openbus-sdk-demo-independentclock-2.1.0.0-RC1.jar demo.IndependentClockClient localhost 2089 demo_independentclock_java_client minhasenha
