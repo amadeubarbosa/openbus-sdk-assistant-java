@@ -1,20 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>br.puc-rio.tecgraf.openbus</groupId>
   <artifactId>openbus-sdk-assistant</artifactId>
   <packaging>pom</packaging>
-  <version>2.1.0-SNAPSHOT</version>
-
-  <name>OpenBus - SDK</name>
-  <url>http://www.tecgraf.puc-rio.br/openbus</url>
+  <version>2.1.0.0-RC1</version>
+  <name>OpenBus - Assistente</name>
   
   <properties>
     <java.version>1.6</java.version>
-    <sdk.version>2.1.0-SNAPSHOT</sdk.version>
+    <sdk.version>2.1.0.0-RC1</sdk.version>
     <junit.version>4.11</junit.version>
-    <jacorb.version>3.6</jacorb.version>
+    <jacorb.version>3.5</jacorb.version>
     <idlj.version>1.2.1</idlj.version>
     <javadoc.version>2.9.1</javadoc.version>
     <source.version>2.2.1</source.version>
@@ -23,21 +20,21 @@
 
   <distributionManagement>
     <repository>
-      <id>tecgraf-releases</id>
+      <id>tecgraf-pub-releases</id>
       <name>Releases do Tecgraf</name>
-      <url>http://nexus.tecgraf.puc-rio.br:8081/nexus/content/repositories/releases</url>
+      <url>http://maven.tecgraf.puc-rio.br:8081/nexus/content/repositories/releases</url>
     </repository>
     <snapshotRepository>
-      <id>tecgraf-snapshots</id>
+      <id>tecgraf-pub-snapshots</id>
       <name>Snapshots do Tecgraf</name>
-      <url>http://nexus.tecgraf.puc-rio.br:8081/nexus/content/repositories/snapshots</url>
+      <url>http://maven.tecgraf.puc-rio.br:8081/nexus/content/repositories/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
   
   <repositories>
     <repository>
       <id>nexus</id>
-      <url>http://nexus.tecgraf.puc-rio.br:8081/nexus/content/groups/public</url>
+      <url>http://maven.tecgraf.puc-rio.br:8081/nexus/content/groups/public</url>
     </repository>
   </repositories>
 
